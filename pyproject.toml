@@ -1,0 +1,27 @@
+[build-system]
+requires      = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "f3l_functions"
+version = "0.0.1"
+description="Package to analyze fed3 files."
+readme = "README.md"
+authors = [{ name = "Alex Legaria", email = "leg.alex96@gmail.com"}]
+license = {file = "LICENSE"}
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Science/Research',
+    'Programming Language :: Python :: 3'
+]
+keywords = ["neuroscience", "behavior", "research"]
+dependencies = [
+    'pandas',
+    'numpy',
+    'statsmodels'
+]
+requires-python = ">= 3.6"
+
+[project.urls]
+Home = "https://github.com/AlexLM96/ephys_analysis"
