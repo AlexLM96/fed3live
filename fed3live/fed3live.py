@@ -68,7 +68,7 @@ def reversal_peh(data_choices, min_max, return_avg = False, mode="database"):
         counter = 0
         for i in range(min_max[0],min_max[1]):
             c_choice = data_choices[event].iloc[switch+i]
-            c_prob_right = data_choices[event].iloc[switch+i]
+            c_prob_right = data_choices[device_number].iloc[switch+i]
             if c_prob_right < 50:
                 c_high = "Left"
             elif c_prob_right > 50:
