@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fed3live"
-version = "0.0.2"
+version = "0.0.3"
 description="Package to analyze fed3 files."
 readme = "README.md"
 authors = [{ name = "Alex Legaria", email = "leg.alex96@gmail.com"}]
@@ -24,4 +24,4 @@ dependencies = [
 requires-python = ">= 3.6"
 
 [project.urls]
-Home = "https://github.com/AlexLM96/ephys_analysis"
+Home = "https://github.com/AlexLM96/fed3live_functions"
