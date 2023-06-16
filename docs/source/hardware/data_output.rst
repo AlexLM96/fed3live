@@ -33,7 +33,7 @@ FED3Bandit .csv files are composed of the following 15 columns:
     * RightShort - Poke on right port that does not reach poke duration threshold
     * RightWithPellet - Poke on right pork while there is a pellet in pellet well
     * RightDuringDispense - Poke on right port while the pellet is being dispensed
-9. High_prob_poke - Port side that has the highe probability of delivering a pellet. 
+9. High_prob_poke - Port side that has the higher probability of delivering a pellet. 
    If probability is equal on both sides, the output will be "nan"
 10. Left_Poke_Count - Total number of left pokes since session start (see NOTE)
 11. Right_Poke_Count - Total number of left pokes since session start (see NOTE)
@@ -45,5 +45,5 @@ FED3Bandit .csv files are composed of the following 15 columns:
 15. Poke_Time - Time length of any left or right poke (including unsuccessful).
     If event does not contain "Right" or "Left" in its name, then output is nan.
     
-Example Results
+Example Data
 ----------------

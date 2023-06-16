@@ -7,5 +7,6 @@ FED3Bandit
 
    overview
    arduino_code
+   tutorial
    data_output
    
