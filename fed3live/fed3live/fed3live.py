@@ -2,12 +2,32 @@
 This is the main module for analysis of the bandit task.
 """
 
+import os
+import sys
 import pandas as pd
 import datetime
 import numpy as np
 import statsmodels.api as sm
+import pkg_resources
 
 #%%
+
+def load_sampledata():
+    """Loads sample data from a bandit task that has the specification
+    shared in Arduino example
+    
+    Parameters
+    ----------
+
+    Returns
+    --------
+    samle_data : pd.DataFrame
+        Sample data
+    """
+
+    filename = pkg_resources.resource_filename(__name__, 'sample_data.csv')
+    sample_data = pd.read_csv(filename)
+    return sample_data
 
 def filter_data(data_choices):
     """Filters the data to only show pokes "Left" or "Right" events, which are pokes that did not occur 

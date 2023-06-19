@@ -9,7 +9,7 @@ CSV file description
 
 FED3 saves data as .csv files. Here is what a FE3Bandit output .csv file looks like.
 
-.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/misc/data_output_sample.png
+.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/data_output_sample.png
 
 
 FED3Bandit .csv files are composed of the following 15 columns:

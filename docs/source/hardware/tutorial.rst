@@ -43,16 +43,12 @@ Here is the sample code::
             pellet_counter = 0;
             new_prob = probs[random(0,2)];
             if (! fed3.allowBlockRepeat) {
-            while (new_prob == prob_left) {
-                new_prob = probs[random(0,2)];
+                while (new_prob == fed3.prob_left) {
+                    new_prob = probs[random(0,2)];
+                }
             }
-            prob_left = new_prob;
-            prob_right = 100 - prob_left;
-            }
-            else {
-            prob_left = new_prob;
-            prob_right = 100 - prob_left;
-            }
+            fed3.prob_left = new_prob;
+            fed3.prob_right = 100 - fed3.prob_left;
         }
         
         // This is part 2. 
@@ -60,14 +56,14 @@ Here is the sample code::
             fed3.BlockPelletCount = pellet_counter;
             fed3.logLeftPoke();                                 //Log left poke
             delay(1000);
-            if (random(100) < prob_left) {                      //Select a random number between 0-100 and ask if it is between 0-80 (80% of the time).  If so:
-            fed3.ConditionedStimulus();                         //Deliver conditioned stimulus (tone and lights)
-            fed3.Feed();                                        //Deliver pellet
+            if (random(100) < fed3.prob_left) {                      //Select a random number between 0-100 and ask if it is between 0-80 (80% of the time).  If so:
+              fed3.ConditionedStimulus();                         //Deliver conditioned stimulus (tone and lights)
+              fed3.Feed();                                        //Deliver pellet
             pellet_counter ++;                                  //Increase pellet counter by one
             }
             else {                                              //If random number is between 81-100 (20% of the time)
-            fed3.Tone(300, 600);                                //Play the error tone
-            fed3.Timeout(timeoutIncorrect, true, true);
+              fed3.Tone(300, 600);                                //Play the error tone
+              fed3.Timeout(timeoutIncorrect, true, true);
             } 
         }
 
@@ -76,14 +72,14 @@ Here is the sample code::
             fed3.BlockPelletCount = pellet_counter;
             fed3.logRightPoke();                                 //Log Right poke
             delay(1000);
-            if (random(100) < prob_right) {                      //Select a random number between 0-100 and ask if it is between 80-100 (20% of the time).  If so:
-            fed3.ConditionedStimulus();                          //Deliver conditioned stimulus (tone and lights)
-            fed3.Feed();                                         //Deliver pellet
-            pellet_counter ++;                                   //Increase pellet counter by one
+            if (random(100) < fed3.prob_right) {                      //Select a random number between 0-100 and ask if it is between 80-100 (20% of the time).  If so:
+              fed3.ConditionedStimulus();                          //Deliver conditioned stimulus (tone and lights)
+              fed3.Feed();                                         //Deliver pellet
+              pellet_counter ++;                                   //Increase pellet counter by one
             }
             else {                                               //If random number is between 0-80 (80% of the time)
-            fed3.Tone(300, 600);                                 //Play the error tone
-            fed3.Timeout(timeoutIncorrect, true, true);
+              fed3.Tone(300, 600);                                 //Play the error tone
+              fed3.Timeout(timeoutIncorrect, true, true);
             }
         }
     }
@@ -156,15 +152,15 @@ let's discuss the task set up. Here's the code of the task::
             pellet_counter = 0;
             new_prob = probs[random(0,2)];
             if (! fed3.allowBlockRepeat) {
-            while (new_prob == prob_left) {
+            while (new_prob == fed3.prob_left) {
                 new_prob = probs[random(0,2)];
             }
-            prob_left = new_prob;
-            prob_right = 100 - prob_left;
+            fed3.prob_left = new_prob;
+            fed3.prob_right = 100 - fed3.prob_left;
             }
             else {
-            prob_left = new_prob;
-            prob_right = 100 - prob_left;
+            fed3.prob_left = new_prob;
+            fed3.prob_right = 100 - fed3.prob_left;
             }
         }
         
@@ -173,14 +169,14 @@ let's discuss the task set up. Here's the code of the task::
             fed3.BlockPelletCount = pellet_counter;
             fed3.logLeftPoke();                                 //Log left poke
             delay(1000);
-            if (random(100) < prob_left) {                      //Select a random number between 0-100 and ask if it is between 0-80 (80% of the time).  If so:
-            fed3.ConditionedStimulus();                         //Deliver conditioned stimulus (tone and lights)
-            fed3.Feed();                                        //Deliver pellet
-            pellet_counter ++;                                  //Increase pellet counter by one
+            if (random(100) < fed3.prob_left) {                      //Select a random number between 0-100 and ask if it is between 0-80 (80% of the time).  If so:
+              fed3.ConditionedStimulus();                         //Deliver conditioned stimulus (tone and lights)
+              fed3.Feed();                                        //Deliver pellet
+              pellet_counter ++;                                  //Increase pellet counter by one
             }
             else {                                              //If random number is between 81-100 (20% of the time)
-            fed3.Tone(300, 600);                                //Play the error tone
-            fed3.Timeout(timeoutIncorrect, true, true);
+              fed3.Tone(300, 600);                                //Play the error tone
+              fed3.Timeout(timeoutIncorrect, true, true);
             } 
         }
 
@@ -189,14 +185,14 @@ let's discuss the task set up. Here's the code of the task::
             fed3.BlockPelletCount = pellet_counter;
             fed3.logRightPoke();                                 //Log Right poke
             delay(1000);
-            if (random(100) < prob_right) {                      //Select a random number between 0-100 and ask if it is between 80-100 (20% of the time).  If so:
-            fed3.ConditionedStimulus();                          //Deliver conditioned stimulus (tone and lights)
-            fed3.Feed();                                         //Deliver pellet
-            pellet_counter ++;                                   //Increase pellet counter by one
+            if (random(100) < fed3.prob_right) {                      //Select a random number between 0-100 and ask if it is between 80-100 (20% of the time).  If so:
+              fed3.ConditionedStimulus();                          //Deliver conditioned stimulus (tone and lights)
+              fed3.Feed();                                         //Deliver pellet
+              pellet_counter ++;                                   //Increase pellet counter by one
             }
             else {                                               //If random number is between 0-80 (80% of the time)
-            fed3.Tone(300, 600);                                 //Play the error tone
-            fed3.Timeout(timeoutIncorrect, true, true);
+              fed3.Tone(300, 600);                                 //Play the error tone
+              fed3.Timeout(timeoutIncorrect, true, true);
             }
         }
     }
@@ -210,48 +206,176 @@ As previously mentioned, the body of the FED3Bandit task consists of three parts
         pellet_counter = 0;
         new_prob = probs[random(0,2)];
         if (! fed3.allowBlockRepeat) {
-        while (new_prob == prob_left) {
+        while (new_prob == fed3.prob_left) {
             new_prob = probs[random(0,2)];
         }
-        prob_left = new_prob;
-        prob_right = 100 - prob_left;
+        fed3.prob_left = new_prob;
+        fed3.prob_right = 100 - fed3.prob_left;
         }
         else {
-        prob_left = new_prob;
-        prob_right = 100 - prob_left;
+        fed3.prob_left = new_prob;
+        fed3.prob_right = 100 - fed3.prob_left;
         }
     }
 
 In this example, reward probabilities change when the mouse have obtained 30 pellets (``fed3.pelletsToSwitch = 30``).
 
-``pellet counter`` is the variable that tracks the number of pellets that have been received in the current block. 
-After 30 pellets have been received, ``pellet counter`` goes back to zero, a new probability from the reward
+``pellet_counter`` is the variable that tracks the number of pellets that have been received in the current block. 
+After 30 pellets have been received, ``pellet_counter`` goes back to zero, a new probability from the reward
 probability options ``probs`` is then randomly chosen (in this case there are only two options, 0 or 80). 
 
 Since ``fed3.allowBlockRepeat`` was set to ``false``, a new probability will keep being chosen until ``new_prob`` is
-different from ``prob_left``, and this will be the new value of ``prob_left``.
+different from ``fed3.prob_left``, and this will be the new value of ``fed3.prob_left``.
 
-In other words, since there are only two possible probabilities, ``prob_left`` will always be 
-``80 -> 20 -> 80 -> ...``. In this case, the new reward probability of right will alwas be ``100-prob_left``. 
+In other words, since there are only two possible probabilities, ``fed3.prob_left`` will always be 
+``80 -> 20 -> 80 -> ...``. In this case, the new reward probability of right will always be ``100-fed3.prob_left``. 
 Leading to the following behavior
 
-========   ===========   ===========
-Block       prob_left    prob_right
-========   ===========   ===========
-1            80            20
-2            20            80
-3            80            20
-========   ===========   ===========
+========   ================   ==================
+Block       fed3.prob_left    fed3.prob_right
+========   ================   ==================
+1            80                20
+2            20                80
+3            80                20
+========   ================   ==================
 
 And so on. This is behavior is identical to a probabilistic reversal task, showing that this task is a special
 case of a two-armed bandit task.
 
+2. Behavior after left poke::
+    
+    // This is part 2. 
+    if (fed3.Left) {
+      fed3.BlockPelletCount = pellet_counter;
+      fed3.logLeftPoke();                                 //Log left poke
+      delay(1000);
+      if (random(100) < fed3.prob_left) {                     //Select a random number between 0-100 and ask if it is between 0-80 (80% of the time).  If so:
+        fed3.ConditionedStimulus();                         //Deliver conditioned stimulus (tone and lights)
+        fed3.Feed();                                        //Deliver pellet
+        pellet_counter ++;                                  //Increase pellet counter by one
+      }
+      else {                                              //If random number is between 81-100 (20% of the time)
+        fed3.Tone(300, 600);                                //Play the error tone
+        fed3.Timeout(timeoutIncorrect, true, true);
+      } 
+    }
+
+Here, when the rodent pokes left (`fed3.Left == true`), `fed3.BlockPelletCount` is first updated and
+the left poke is logged. Then, after a delay of one second (`delay(1000)`), an int between 0 and 100
+is selected. 
+
+If the integer is smaller than `fed3.prob_left`, then a short tone will be played 
+(fed3.ConditionedStimulus()) and a pellet will be delivered (`fed3.Feed()`). Due to the inner working
+of the feeding funciton, program will stay in this function until the pellet is retrieved.
+After the pellet is retrieved, the pellet_counter will be updated.
+
+If the integer is greater than `fed3.prob_left`, an error tone will be played (`fed3.Tone(300, 600)`) and
+a time out of duration `timeoutIncorrect` will be triggered. Since the other two argument in the time out
+function are `true, true`, this means that the time out will reset if rodent pokes during time out, and that
+pokes that occur during timeout will not be counted on the FED3 screen.
+
+In average, the random integer will be smaller than `fed3.prob_left` `fed3.prob_left` percent of the times. 
+For example if `fed3.prob_left=80`, a pellet will be delivered 80% of the times, in average.
+
+3. Behavior after right poke
+
+In this example, behavior after a right poke follows the same logic as the behavior after a left poke.
 
 Customizing Task
--------------------------------------
+-------------------
+
+Clearly, a bandit task can be customized in multiple ways. Here we describe a few customization examples.
+The goal of this section is to develop intuition for the FED3Bandit structure. Recipies for different
+versions of the bandit task can be found in the HOW-TO GUIDES section
 
 Reward probabilities
 ^^^^^^^^^^^^^^^^^^^^^
+As we described in the overview section, reward probabilities can be a fixed number or it can come from a 
+distribution. Let's say that we want to use the same task as our previous example, but now we want the 
+reward probabilities to come from a normal distribution. Let's modify the setup of the variables::
+
+    #include <FED3.h>                             //Include the FED3 library 
+    #include <random>
+    String sketch = "Bandit";                     //Unique identifier text for each sketch, change string only. 
+    FED3 fed3 (sketch);                           //Start the FED3 object - don't change
+
+    int pellet_counter = 0;                       // pellet counter variable
+    int timeoutIncorrect = 10;                    // duration in seconds, set to 0 to remove the timeout
+    int probs_mean[2] = {80,20};                  // probability options
+    int probs_std = 10:
+    int new_prob = 0;                             // 
+
+    void setup() {
+    fed3.countAllPokes = false;                   // Whether all pokes are counter 
+    fed3.LoRaTransmit = false;                    // Wireless data transmission (future implementation)
+    fed3.pelletsToSwitch = 30;                    // Number of pellets required to finish the block and change reward probabilities
+    fed3.prob_left = 80;                          // Initial reward probability of left poke
+    fed3.prob_right = 20;                         // Initial reward probability of right poke
+    fed3.allowBlockRepeat = false;                // Whether the same probabilities can be used for two blocks in a row
+    fed3.begin();                                 // Setup the FED3 hardware, all pinmode screen etc, initialize SD card
+    }
+
+    std::default_random_engine generator;
+    std::normal_distribution<float> distribution_left(fed3.prob_left, probs_std);
+    std::normal_distribution<float> distribution_right(fed3.prob_lright, probs_std);
+
+First, notice that we included the `<random>` library.
+We have also changed `int probs[2] = {80,20}` to `int probs_mean[2] = {80,20}` to reflect that these will not
+be fixed but the mean of the normal distribution. Similarly, we added a new variable `int probs_std = 10` that
+will be the standard deviation of the normal distribution. Finally, we create a random_engine 
+instance (`generator`), which will help us select a random number from the normal distribution, and two normal
+distributions (`distribution_left` and `distribution_right`).
+
+Since we want to change the mean of the distribution after the block switchin condition has been met (in this
+case after 30 pellets have been delivered) we modify the condition section as follows::
+
+    // This is part 1. 
+    if (pellet_counter == fed3.pelletsToSwitch) {
+        pellet_counter = 0;
+        new_prob = probs[random(0,2)];
+        if (! fed3.allowBlockRepeat) {
+          while (new_prob == fed3.prob_left) {
+            new_prob = probs[random(0,2)];
+          }
+        fed3.prob_left = new_prob;
+        fed3.prob_right = 100 - fed3.prob_left;
+        std::normal_distribution<float> distribution_left(fed3.prob_left, probs_std);
+        std::normal_distribution<float> distribution_right(fed3.prob_lright, probs_std);
+
+        }
+        else {
+          fed3.prob_left = new_prob;
+          fed3.prob_right = 100 - fed3.prob_left;
+          std::normal_distribution<float> distribution_left(fed3.prob_left, probs_std);
+          std::normal_distribution<float> distribution_right(fed3.prob_lright, probs_std);
+        }
+    }
+
+Here instead of just changing the value of `probs_left` and `probs_right`, we are creating two new normal
+distributions that have the new mean.
+
+Now, let's see how we need to adapt the behavior after a left poke (and right poke identically) to deliver
+a pellet with a probability drawn from a normal distribution::
+
+    // This is part 2. 
+    if (fed3.Left) {
+      fed3.BlockPelletCount = pellet_counter;
+      fed3.logLeftPoke();                                 //Log left poke
+      delay(1000);
+      float normal_left = distribution_left(generator);
+      if (random(100) < normal_left) {                     //Select a random number between 0-100 and ask if it is between 0-80 (80% of the time).  If so:
+        fed3.ConditionedStimulus();                         //Deliver conditioned stimulus (tone and lights)
+        fed3.Feed();                                        //Deliver pellet
+        pellet_counter ++;                                  //Increase pellet counter by one
+      }
+      else {                                              //If random number is between 81-100 (20% of the time)
+        fed3.Tone(300, 600);                                //Play the error tone
+        fed3.Timeout(timeoutIncorrect, true, true);
+      } 
+    }
+
+Here after a left poke, but before evaluating the outcome, we draw a number from `distribution_left` (`normal_left`)
+and evaluate the outcome based on that number.
 
 Independence of arms
 ^^^^^^^^^^^^^^^^^^^^^
