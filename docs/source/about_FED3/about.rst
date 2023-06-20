@@ -2,10 +2,12 @@ About FED3
 ====================================
 
 Feeding Experimentation Device version 3 (FED3) is an open-source battery-powered device for home-cage training of mice in operant tasks.
-FED3 is designed by the Kravitz Lab and OpenEphys. There are over 1000 FED3s being used by 50+ labs.
+FED3 was designed by the Kravitz Lab and OpenEphys. There are ~2000 FED3s being used by 50+ labs.
 
-You can find more about where to buy FED3s here.
+You can find more information about where to buy FED3s `here <https://open-ephys.org/fed3/fed3>`_.
 
-Here is the official GitHub page for FED3 hardware source file and assembly instructions.
+Visit the official `FED3 <https://github.com/KravitzLabDevices/FED3>`_ GitHub page for FED3 hardware source file and assembly instructions.
 
-Here is the official GitHub page for the Arduino FED3 library.
+Visit the official `FED3_Library <https://github.com/KravitzLabDevices/FED3_library>`_ 
+GitHub page for instructions on how to install the the Arduino FED3 library and for 
+`API Reference <https://github.com/KravitzLabDevices/FED3_library/wiki>`_

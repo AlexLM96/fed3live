@@ -1,22 +1,24 @@
 FED3Bandit Arduino Reference
 =================================
 
-FED3Bandit uses a modified version of the FED3 arduino library. This page provides a brief description of variables and functions that are unique
-to FED3Bandit or have been modified from the original library. 
-A comprehensive documentation of the FED3 library `here <https://github.com/KravitzLabDevices/FED3_library/wiki>`_
+FED3Bandit uses the FED3 Arduino Library. This page provides a brief description of variables 
+and functions that are unique to FED3Bandit.
+A comprehensive documentation of the FED3 library can be found
+`here <https://github.com/KravitzLabDevices/FED3_library/wiki>`_
 
 Library Installation
 ---------------------
 
-FED3Bandit uses the FED3_library. You can find instructions on how to install the FED3_library `here2 <https://github.com/KravitzLabDevices/FED3_library>`_
+You can find  on how to install the FED3_library on the GitHub 
+`page <https://github.com/KravitzLabDevices/FED3_library>`_.
 
 
 What's different?
 ------------------
 This section assumes familiarity with the original FED3 library.
 
-Bandit-specific variables (API reference)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Bandit-specific variables 
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 There are variables that have been created specifically for the bandit task:
 
 .. cpp:member:: int prob_left
