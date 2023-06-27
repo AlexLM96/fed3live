@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 928 459" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-401.639,-143.321)">
+        <path d="M546.988,240.947L546.988,588.061" style="fill:none;stroke:black;stroke-width:8.33px;"/>
+        <g transform="matrix(6.12323e-17,-1,1,6.12323e-17,32.295,818.436)">
+            <text x="287.127px" y="405.745px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;">P(reward)</text>
+        </g>
+        <g transform="matrix(1,0,0,1,24.279,-35.2046)">
+            <text x="467.474px" y="636.092px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;">0</text>
+        </g>
+        <g transform="matrix(1,0,0,1,24.279,-365.205)">
+            <text x="467.474px" y="636.092px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;">1</text>
+        </g>
+        <path d="M610.721,319.854L1157,319.854" style="fill:none;stroke:rgb(227,0,38);stroke-width:8.33px;"/>
+        <g transform="matrix(1,0,0,1,0,150)">
+            <path d="M610.721,319.854L1157,319.854" style="fill:none;stroke:rgb(75,117,255);stroke-width:8.33px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,0,14)">
+            <text x="1212.84px" y="466.139px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;fill:rgb(75,117,255);">Left</text>
+        </g>
+        <g transform="matrix(1,0,0,1,0,-129)">
+            <text x="1212.84px" y="466.139px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;fill:rgb(227,0,38);">Right</text>
+        </g>
+        <g transform="matrix(1,0,0,1,-80.4243,13.6569)">
+            <text x="725.845px" y="163.532px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:45.833px;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-miterlimit:2;">Stationary Bandit task</text>
+        </g>
+    </g>
+</svg>

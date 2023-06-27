@@ -6,3 +6,9 @@ How-to Guides
 
 Bandit Task Recipes
 ----------------------------------
+
+
+.. _Analysis pipelines:
+
+Data Analysis Pipelines
+----------------------------------

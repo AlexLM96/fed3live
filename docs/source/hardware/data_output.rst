@@ -49,3 +49,37 @@ FED3Bandit .csv files are composed of the following 15 columns:
     
 Example Data
 ----------------
+In this section, we will use a CSV file to plot the behavior of a mouse and to analyze its
+learning behavior. This analysis was done using Python, and particularly, the :ref:`analysis` 
+tools developed for FED3Bandit.
+
+We can first visualize the pokes (1 if Left poke 0 if right poke) and the probability of receiving a
+food pellet after a left poke (``prob_left``). Note that in this task, the probability of receiving a 
+pellet after a right poke is ``1- prob_left`` so plotting it is not crucial.
+
+.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/sample_bsumm.svg
+    :width: 500
+
+Note that at first glance it seems like there are more left pokes when ``prob_left=0.8`` and fewer when
+``prob_left=0.2``. However, to better visualize this, we can re-plot the data using a running mean of
+pokes, which will give us the probability of poking left in a specific window:
+
+.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/sample_summ.svg
+    :width: 500
+
+Here we can see more clearly how the probability of a left poke increases when ``prob_left=0.8`` and decreases
+when ``prob_left=0.2``.
+
+We can also quantify the number of pokes and pellets:
+
+.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/sample_pp.svg
+    :width: 500
+
+We can also look into learning strategies, such as "win-stay" and "lose-shift" behavior:
+
+.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/sample_pp.svg
+    :width: 500
+
+These are only a couple examples of the metrics that can be extracted from FED3Bandit CSV file. For a more
+comprehensive list of analyses that can be performed on the CSVs files using the analysis tools we have
+developed, see :ref:`fed3live` and :ref:`Analysis pipelines`

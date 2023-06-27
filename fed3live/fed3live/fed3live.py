@@ -64,6 +64,37 @@ def filter_data(data_choices):
     
     return filtered_data
 
+def binned_paction(data_choices, window=5):
+    """Bins actions from fed3 bandit file
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+    window : int
+        Sliding window by which the probability of choosing left will be calculated
+
+    Returns
+    --------
+    p_left : pandas.Series
+        Probability of choosing left. Returns pandas.Series of length data_choices.shape[0] - window
+    
+    """
+    f_data_choices = filter_data(data_choices)
+    actions = f_data_choices["Event"]
+    p_left = []
+    for i in range(len(actions)-window):
+        c_slice = actions[i:i+window]
+        n_left = 0
+        for action in c_slice:
+            if action == "Left":
+                n_left += 1
+            
+        c_p_left = n_left / window
+        p_left.append(c_p_left)
+        
+    return p_left
+
 def count_pellets(data_choices):
     """Counts the number of pellets in fed3 data file
     
@@ -182,37 +213,6 @@ def poke_accuracy(data_choices, return_avg=False):
         return high_pokes.mean()
     else:
         return high_pokes
-
-def binned_paction(data_choices, window=5):
-    """Bins actions from fed3 bandit file
-    
-    Parameters
-    ----------
-    data_choices : pandas.DataFrame
-        The fed3 data file
-    window : int
-        Sliding window by which the probability of choosing left will be calculated
-
-    Returns
-    --------
-    p_left : pandas.Series
-        Probability of choosing left. Returns pandas.Series of length data_choices.shape[0] - window
-    
-    """
-    f_data_choices = filter_data(data_choices)
-    actions = f_data_choices["Event"]
-    p_left = []
-    for i in range(len(actions)-window):
-        c_slice = actions[i:i+window]
-        n_left = 0
-        for action in c_slice:
-            if action == "Left":
-                n_left += 1
-            
-        c_p_left = n_left / window
-        p_left.append(c_p_left)
-        
-    return p_left
 
 def reversal_peh(data_choices, min_max, return_avg = False):
     """Calculates the probability of poking in the high probability port around contingency switches

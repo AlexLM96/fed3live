@@ -1,11 +1,16 @@
+.. _analysis:
+
+
 Analysis and visualization
 ===========================
 
-We have developed a web-based GUI to visualize and do some analysis of fed3Bandit data.
+We have developed a python package called fed3bandit that contains a set of functions for processing and Analysis
+
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
+   fed3live_api
    web_app
-   fed3live
+   
    

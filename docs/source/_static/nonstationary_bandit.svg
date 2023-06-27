@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 926 535" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-399.742,-666.567)">
+        <g transform="matrix(1,0,0,1,-1.89668,576.141)">
+            <path d="M546.988,240.947L546.988,588.061" style="fill:none;stroke:black;stroke-width:8.33px;"/>
+        </g>
+        <g transform="matrix(6.12323e-17,-1,1,6.12323e-17,30.3983,1394.58)">
+            <text x="287.127px" y="405.745px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;">P(reward)</text>
+        </g>
+        <g transform="matrix(1,0,0,1,22.3823,540.936)">
+            <text x="467.474px" y="636.092px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;">0</text>
+        </g>
+        <g transform="matrix(1,0,0,1,22.3823,210.936)">
+            <text x="467.474px" y="636.092px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;">1</text>
+        </g>
+        <path d="M600.827,864.924L737.76,864.924L737.76,1137.82L960.156,1137.82L960.156,988.261L1102.92,988.261" style="fill:none;stroke:rgb(75,117,255);stroke-width:8.33px;"/>
+        <path d="M600.827,1059.16L737.76,1059.16L737.76,910.568L959.185,908.626L959.185,845.501L1109.71,843.558" style="fill:none;stroke:rgb(227,0,38);stroke-width:8.33px;"/>
+        <g transform="matrix(1,-0,-0,1,399.742,666.567)">
+            <path d="M360.653,139.366L341.903,164.366L323.153,139.366L360.653,139.366Z"/>
+            <path d="M341.903,121.635L341.903,144.366" style="fill:none;stroke:black;stroke-width:8.33px;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,220,0)">
+            <g transform="matrix(1,-0,-0,1,179.742,666.567)">
+                <path d="M580.653,139.366L561.903,164.366L543.153,139.366L580.653,139.366Z"/>
+                <path d="M561.903,121.635L561.903,144.366" style="fill:none;stroke:black;stroke-width:8.33px;"/>
+            </g>
+        </g>
+        <g transform="matrix(1,0,0,1,358.155,325.533)">
+            <g transform="matrix(1,-0,-0,1,41.5873,341.034)">
+                <path d="M718.808,464.899L700.058,489.899L681.308,464.899L718.808,464.899Z"/>
+                <path d="M700.058,447.168L700.058,469.899" style="fill:none;stroke:black;stroke-width:8.33px;"/>
+            </g>
+        </g>
+        <g transform="matrix(1,0,0,1,-98.003,2.27374e-13)">
+            <text x="1232.38px" y="1126.65px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:45.833px;">Condition</text>
+            <text x="1232.38px" y="1173.98px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:45.833px;">met</text>
+        </g>
+        <g transform="matrix(1,0,0,1,-78.4658,538.863)">
+            <text x="1212.84px" y="466.139px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;fill:rgb(75,117,255);">Left</text>
+        </g>
+        <g transform="matrix(1,0,0,1,-78.4658,385.763)">
+            <text x="1212.84px" y="466.139px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:50px;fill:rgb(227,0,38);">Right</text>
+        </g>
+        <g transform="matrix(1,0,0,1,-80.4243,536.343)">
+            <text x="741.642px" y="163.532px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:45.833px;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-miterlimit:2;">Nonstationary Bandit task</text>
+            <text x="804.058px" y="210.865px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:45.833px;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-miterlimit:2;">(independent arms)</text>
+        </g>
+    </g>
+</svg>
