@@ -1,3 +1,4 @@
-#Distribution
-dist/
-fed3live.egg-info/
+# Packaging
+docs/build/
+fed3live.egg-info
+build/
