@@ -193,7 +193,6 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
             end_time = pd.to_datetime(end_slice.iloc[:,0]).dt.time.iloc[-1]
             last_option = int(str(end_time)[:2])
             end_options = np.arange(0,last_option+1)
-            print(end_options)
 
 
             return list(start_options), list(end_options), False, False, str(start_time)[:2], str(last_option)
