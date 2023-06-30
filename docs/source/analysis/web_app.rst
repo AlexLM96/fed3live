@@ -19,8 +19,7 @@ After installing the ``fed3bandit`` package (see :ref:`install-package`) we can 
         3. On the file explorer window, go to the "View". Then on the "Show/hide" section, enable "File name extensions"
         4. On the file explorer window, go to the desktop folder
         5. Find the .txt file that was created in step 1 and right-click on it and hit "rename"
-        6. Change the extension of the file from .txt to .py proceed to step 2 of the main instructions 
-        (you can open and edit this file on notepad)
+        6. Change the extension of the file from .txt to .py proceed to step 2 of the main instructions (you can open and edit this file on notepad)
 
 2. Type the following:
 
