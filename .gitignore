@@ -1,4 +1,9 @@
 # Packaging
-docs/build/
-fed3live.egg-info
+fed3bandit.egg-info
 build/
+
+# Docs
+docs/build/
+
+#Cache
+fed3bandit/fed3bandit/__pycache__/
