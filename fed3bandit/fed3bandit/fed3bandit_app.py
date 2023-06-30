@@ -6,7 +6,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objs as go
 import statsmodels.api as sm
-import fed3live as f3l
+import fed3bandit as f3b
 import base64
 import io
 
@@ -77,7 +77,7 @@ def update_output(list_of_contents, filenames):
         content_type, content_string = list_of_contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        file_data[filenames[:12]]=f3l.filter_data(df)
+        file_data[filenames[:12]]=f3b.filter_data(df)
         file_names.append(filenames[:12])
         
     return file_names
@@ -279,10 +279,10 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                     
 
                 elif analysis_type == "Win-stay/Lose-shift":
-                    all_ws_g1 = {mouse: f3l.win_stay(g1_slices[mouse]) for mouse in g1_slices}
-                    all_ws_g2 = {mouse: f3l.win_stay(g2_slices[mouse]) for mouse in g2_slices}
-                    all_ls_g1 = {mouse: f3l.lose_shift(g1_slices[mouse]) for mouse in g1_slices}
-                    all_ls_g2 = {mouse: f3l.lose_shift(g1_slices[mouse]) for mouse in g1_slices}
+                    all_ws_g1 = {mouse: f3b.win_stay(g1_slices[mouse]) for mouse in g1_slices}
+                    all_ws_g2 = {mouse: f3b.win_stay(g2_slices[mouse]) for mouse in g2_slices}
+                    all_ls_g1 = {mouse: f3b.lose_shift(g1_slices[mouse]) for mouse in g1_slices}
+                    all_ls_g2 = {mouse: f3b.lose_shift(g1_slices[mouse]) for mouse in g1_slices}
                     
                     x_ws = ["win-stay"]
                     x_ls = ["lose-shift"]
@@ -305,8 +305,8 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
 
         if analysis_type != None:
             if analysis_type == "Overview":
-                cb_actions = f3l.binned_paction(c_slice, 5)
-                c_prob = f3l.filter_data(c_slice)["Session_type"].iloc[5:] / 100
+                cb_actions = f3b.binned_paction(c_slice, 5)
+                c_prob = f3b.filter_data(c_slice)["Session_type"].iloc[5:] / 100
                 c_trials = np.arange(len(cb_actions)) 
                 c_analysis.append(pd.DataFrame({"Trial": c_trials, "True P(left)": c_prob, "Mouse P(left)": cb_actions}))
 
@@ -316,8 +316,8 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                                 font = dict(size = 16), transition_duration=200)
             
             elif analysis_type == "Win-stay/Lose-shift":
-                c_ws = f3l.win_stay(c_slice)
-                c_ls = f3l.lose_shift(c_slice)
+                c_ws = f3b.win_stay(c_slice)
+                c_ls = f3b.lose_shift(c_slice)
                 c_analysis.append(pd.DataFrame({"Win-stay": [c_ws], "Lose-shift": [c_ls]}))
 
                 figure.add_trace(go.Bar(x=[0,1], y= [c_ws, c_ls]))
@@ -325,16 +325,16 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                                 xaxis= dict(tickvals = [0,1], ticktext = ["Win-Stay", "Lose-Shift"]), transition_duration=200)
                 
             elif analysis_type == "Reversal peh":
-                c_rev_peh = f3l.reversal_peh(c_slice, (-10,11)).mean(axis=0)
+                c_rev_peh = f3b.reversal_peh(c_slice, (-10,11)).mean(axis=0)
                 c_analysis.append(pd.DataFrame({"Trial from reversal": np.arange(-10,11), "P(High)": c_rev_peh}))
 
                 figure.add_trace(go.Scatter(x=np.arange(-10,11),y=c_rev_peh, mode='lines', showlegend = False))
                 figure.update_layout(title = {'text': "Reversal PEH", 'x': 0.5}, xaxis_title = "Trial", yaxis_title = "P(High)", yaxis_range=[0,1], font = dict(size = 16), transition_duration=200)
             
             elif analysis_type == "Logistic wins":
-                c_sidep_rew = f3l.side_prewards(c_slice)
-                c_preX = f3l.create_X(c_slice, c_sidep_rew[0], c_sidep_rew[1],5)
-                c_plogreg = f3l.logit_regr(c_preX)
+                c_sidep_rew = f3b.side_prewards(c_slice)
+                c_preX = f3b.create_X(c_slice, c_sidep_rew[0], c_sidep_rew[1],5)
+                c_plogreg = f3b.logit_regr(c_preX)
                 c_pcoeffs = c_plogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_pcoeffs}))
 
@@ -342,9 +342,9 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                 figure.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[-0.5,2.5], font = dict(size = 16), transition_duration=200)
 
             elif analysis_type == "Logistic losses":
-                c_siden_rew = f3l.side_nrewards(c_slice)
-                c_npreX = f3l.create_X(c_slice, c_siden_rew[0], c_siden_rew[1],5)
-                c_nlogreg = f3l.logit_regr(c_npreX)
+                c_siden_rew = f3b.side_nrewards(c_slice)
+                c_npreX = f3b.create_X(c_slice, c_siden_rew[0], c_siden_rew[1],5)
+                c_nlogreg = f3b.logit_regr(c_npreX)
                 c_ncoeffs = c_nlogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_ncoeffs}))
 
