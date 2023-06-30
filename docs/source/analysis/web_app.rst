@@ -57,7 +57,7 @@ In order to provide an overview of how to use the app, we have divided it into 7
 1. Upload button: Here you can drag or click to load your FED3Bandit .csv files. Please note that while this button only takes .csv files,
    if other .csv files that are not the output of the FED3Bandit task are uploaded, the app may break. The Files option shows all the files
    that have been uploaded. Click to select a file.
-2. Analysis options: Here you will see all the analysis options. After you select a file,Currently these options are:
+2. Analysis options: Here you will see all the analysis options. After you select a file. Currently these options are:
     * Overview
     * Win-stay/Lose-shift
     * Reversal peh
