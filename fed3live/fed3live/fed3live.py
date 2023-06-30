@@ -9,6 +9,7 @@ import datetime
 import numpy as np
 import statsmodels.api as sm
 import pkg_resources
+import runpy
 
 #%%
 
@@ -21,7 +22,7 @@ def load_sampledata():
 
     Returns
     --------
-    samle_data : pd.DataFrame
+    sample_data : pd.DataFrame
         Sample data
     """
 

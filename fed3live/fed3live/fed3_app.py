@@ -18,24 +18,6 @@ data_analyses = ["Overview", "Win-stay/Lose-shift", "Reversal peh", "Logistic wi
 c_analysis = []
 group_clicks = 0
 
-
-#%%
-
-def filter_data(data_choices):
-    try:
-        filtered_data = data_choices[np.logical_and.reduce((data_choices["Event"]!="Pellet",
-                                                            data_choices["Event"]!="LeftinTimeOut",
-                                                            data_choices["Event"]!="RightinTimeout",
-                                                            data_choices["Event"]!="LeftDuringDispense",
-                                                            data_choices["Event"]!="RightDuringDispense"))]
-    except:
-        filtered_data = data_choices[np.logical_and.reduce((data_choices["fed3EventActive"]!="Pellet",
-                                                            data_choices["fed3EventActive"]!="LeftinTimeOut",
-                                                            data_choices["fed3EventActive"]!="RightinTimeout",
-                                                            data_choices["fed3EventActive"]!="LeftDuringDispense",
-                                                            data_choices["fed3EventActive"]!="RightDuringDispense"))]
-    return filtered_data
-
 #%%
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -95,7 +77,7 @@ def update_output(list_of_contents, filenames):
         content_type, content_string = list_of_contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        file_data[filenames[:12]]=filter_data(df)
+        file_data[filenames[:12]]=f3l.filter_data(df)
         file_names.append(filenames[:12])
         
     return file_names
@@ -201,15 +183,14 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
             dt_end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
             
             c_df = file_data[file]
-            c_df.iloc[:,0] = pd.to_datetime(c_df.iloc[:,0])
-            c_dates =c_df.iloc[:,0].dt.date
+            c_dates = pd.to_datetime(c_df.iloc[:,0]).dt.date
 
             start_slice = c_df[c_dates == dt_start_date]
-            start_time = start_slice.iloc[:,0].dt.time.iloc[0]
+            start_time = pd.to_datetime(start_slice.iloc[:,0]).dt.time.iloc[0]
             start_options = np.arange(int(str(start_time)[:2]),24)
 
             end_slice = c_df[c_dates == dt_end_date]
-            end_time = end_slice.iloc[:,0].dt.time.iloc[-1]
+            end_time = pd.to_datetime(end_slice.iloc[:,0]).dt.time.iloc[-1]
             last_option = int(str(end_time)[:2])
             end_options = np.arange(0,last_option+1)
             print(end_options)
@@ -324,8 +305,8 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
 
         if analysis_type != None:
             if analysis_type == "Overview":
-                cb_actions = f3l.binned_paction(c_slice["Event"], 5)
-                c_prob = c_slice["Session_type"].iloc[5:] / 100
+                cb_actions = f3l.binned_paction(c_slice, 5)
+                c_prob = f3l.filter_data(c_slice)["Session_type"].iloc[5:] / 100
                 c_trials = np.arange(len(cb_actions)) 
                 c_analysis.append(pd.DataFrame({"Trial": c_trials, "True P(left)": c_prob, "Mouse P(left)": cb_actions}))
 
@@ -390,5 +371,8 @@ def func(n_clicks, filename, analysis_type):
         return None
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
+    #app.run_server(debug=True)
+
+def start_gui():
     app.run_server(debug=True)
