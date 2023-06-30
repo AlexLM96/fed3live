@@ -1,10 +1,10 @@
 .. _analysis:
 
-
 Analysis and visualization
 ===========================
 
-We have developed a python package called fed3bandit that contains a set of functions for processing and Analysis
+We have developed a python package for FED3Bandit data analysis and visualization, as well as a web-based GUI for data visualization.
+They are both contained within the 
 
 
 .. toctree::
