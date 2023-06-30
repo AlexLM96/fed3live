@@ -1,5 +1,5 @@
 # Defining the exact version will make sure things don't break
-sphinx==4.5.0
+sphinx==5.0.2
 pydata-sphinx-theme==0.8.1
 pandas==1.5.3
 numpy==1.24.2
