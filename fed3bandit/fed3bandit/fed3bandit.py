@@ -2,14 +2,10 @@
 This is the main module for analysis of the bandit task.
 """
 
-import os
-import sys
 import pandas as pd
-import datetime
 import numpy as np
 import statsmodels.api as sm
 import pkg_resources
-import runpy
 
 #%%
 
