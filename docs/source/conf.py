@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../fed3live'))
+sys.path.insert(0, os.path.abspath('../../fed3bandit'))
 
 
 # -- Project information -----------------------------------------------------

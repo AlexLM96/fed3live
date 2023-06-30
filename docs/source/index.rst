@@ -5,7 +5,7 @@
 
 FED3Bandit
 ====================================
-FED3Bandit is animplementation of a two-bandit task that uses the open-source FED3 device.
+FED3Bandit is an implementation of a two-bandit task that uses the open-source FED3 device.
 
 
 .. toctree::

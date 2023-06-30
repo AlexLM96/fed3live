@@ -18,12 +18,12 @@ remain constant or chenage upon a condition, and may be dependent or independent
 When the reward probabilities of Left and Right change upon meeting a condition, the task is called *nonstationary*. A special case of *nonstationary* bandit task is
 The *restless two-armed bandit task*, where reward probabilities change sligthly after each choice.
 
-.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/stationary_bandit.svg
+.. image:: /_static/stationary_bandit.svg
     :width: 500
     
 |
 
-.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/nonstationary_bandit.svg
+.. image:: /_static/nonstationary_bandit.svg
     :width: 500
 
 Here are some examples of conditions that may be used to trigger the change in reward probabilities:
@@ -44,7 +44,7 @@ about FED3 can be found here: :ref:`about-fed3`)In this section we will describe
 FED3 has two nose pokes, which are used in FED3Bandit as the two "arms". Additionally, FED3 has a well through which food pellets are dispensed. FED3Bandit, thus, uses
 nose pokes as choices, and food pellets as rewards. 
 
-.. image:: C:/Users/alex.legariamacal/Desktop/fed3live/docs/source/_static/fed3.svg
+.. image:: /_static/fed3.svg
     :width: 500
 
 |
@@ -61,4 +61,4 @@ and provides visualization and analysis tools. You can find more information abo
 uses the fed3live python package.
 
 fed3live is a python package data that contains functions for analysis of FED3Bandit CSV files. You can find more information about the fed3live python package 
-in the :ref:`fed3live` section.
+in the :ref:`analysis` section.
