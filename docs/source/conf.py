@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../../fed3bandit'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'fed3live'
+project = 'fed3bandit'
 copyright = '2023, Alex Legaria'
 author = 'Alex Legaria'
 
@@ -52,8 +52,8 @@ html_theme_options = {
   "show_nav_level": 4,
   "show_toc_level": 2,
   "logo": {
-      "image_light": "fed3bandit_logo1.svg",
-      "image_dark": "fed3bandit_logo1.svg"
+      "image_light": "/_static/fed3bandit_logo1.svg",
+      "image_dark": "/_static/fed3bandit_logo1.svg"
   },
 }
 
