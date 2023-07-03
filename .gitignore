@@ -1,6 +1,7 @@
 # Packaging
 fed3bandit.egg-info
 build/
+dist/
 
 # Docs
 docs/build/
