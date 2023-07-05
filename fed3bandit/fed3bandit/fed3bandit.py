@@ -92,6 +92,48 @@ def binned_paction(data_choices, window=5):
         
     return p_left
 
+def left_probs(data_choices, offset=0):
+    """Finds the true left reward probability by event
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+    offset : int
+        Row (event) number in which the slice will start
+
+    Returns
+    --------
+    p_left : pandas.Series
+        Probability of choosing left. Returns pandas.Series of length data_choices.shape[0] - window
+    
+    """
+    f_data_choices = filter_data(data_choices)
+    left_probs = f_data_choices["Session_type"].iloc[offset:]
+
+    return left_probs
+
+def right_probs(data_choices, offset=0):
+    """Finds the true left reward probability by event
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+    offset : int
+        Row (event) number in which the slice will start
+
+    Returns
+    --------
+    p_left : pandas.Series
+        Probability of choosing left. Returns pandas.Series of length data_choices.shape[0] - window
+    
+    """
+    f_data_choices = filter_data(data_choices)
+    left_probs = f_data_choices["Device_number"].iloc[offset:]
+
+    return left_probs
+
 def count_pellets(data_choices):
     """Counts the number of pellets in fed3 data file
     
