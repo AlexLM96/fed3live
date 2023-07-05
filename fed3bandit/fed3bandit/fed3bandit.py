@@ -114,7 +114,7 @@ def left_probs(data_choices, offset=0):
     return left_probs
 
 def right_probs(data_choices, offset=0):
-    """Finds the true left reward probability by event
+    """Finds the true right reward probability by event
     
     Parameters
     ----------
