@@ -46,6 +46,8 @@ def filter_data(data_choices):
                                                                 data_choices["Event"]!="RightinTimeout",
                                                                 data_choices["Event"]!="LeftDuringDispense",
                                                                 data_choices["Event"]!="RightDuringDispense",
+                                                                data_choices["Event"]!="LeftWithPellet",
+                                                                data_choices["Event"]!="RightWithPellet",
                                                                 data_choices["Event"]!="LeftShort",
                                                                 data_choices["Event"]!="RightShort"))]
     except:
@@ -54,6 +56,8 @@ def filter_data(data_choices):
                                                                 data_choices["fed3EventActive"]!="RightinTimeout",
                                                                 data_choices["fed3EventActive"]!="LeftDuringDispense",
                                                                 data_choices["fed3EventActive"]!="RightDuringDispense",
+                                                                data_choices["Event"]!="LeftWithPellet",
+                                                                data_choices["Event"]!="RightWithPellet",
                                                                 data_choices["fed3EventActive"]!="LeftShort",
                                                                 data_choices["fed3EventActive"]!="RightShort"))]
     
