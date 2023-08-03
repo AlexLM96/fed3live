@@ -96,6 +96,31 @@ def binned_paction(data_choices, window=5):
         
     return p_left
 
+def true_probs(data_choices, offset=5):
+    """Extracts true reward probabilities from Fed3bandit file
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+    offset : int
+        Event number in which the extraction will start
+
+    Returns
+    --------
+    left_probs : pandas.Series
+        True reward probabilities of left port
+
+    right_probs : pandas.Series
+        True reward probabilities of right port
+    """
+
+    f_data_choices = filter_data(data_choices)
+    left_probs = f_data_choices["Prob_left"].iloc[offset:] / 100
+    right_probs = f_data_choices["Prob_right"].iloc[offset:] / 100
+
+    return left_probs, right_probs
+
 def count_pellets(data_choices):
     """Counts the number of pellets in fed3 data file
     
