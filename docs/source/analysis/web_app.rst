@@ -12,14 +12,7 @@ After installing the ``fed3bandit`` package (see :ref:`install-package`) we can 
 
 1. Create a python file. To do this, open your python editor of choice (spyder, pycharm, vs code, etc) and create a new .py file. 
 
-    * NOTE: Since  we need a .py file and not a .ipynb, Jupyter notebook cannot be used for this step. To create a python file from scratch on Windows you can do the following:
-        
-        1. On your desktop window right-click, then go to New -> Text Document. Name the file and hit Enter.
-        2. Open a file explorer window.
-        3. On the file explorer window, go to the "View". Then on the "Show/hide" section, enable "File name extensions"
-        4. On the file explorer window, go to the desktop folder
-        5. Find the .txt file that was created in step 1 and right-click on it and hit "rename"
-        6. Change the extension of the file from .txt to .py proceed to step 2 of the main instructions (you can open and edit this file on notepad)
+    * NOTE: Since  we need a .py file and not a .ipynb, Jupyter notebook cannot be used for this step.
 
 2. Type the following:
 
@@ -74,7 +67,7 @@ In order to provide an overview of how to use the app, we have divided it into 7
 Sample data for testing
 ------------------------
 If you wish to test the web-app but haven't collected any data yet, you can use the sample data that is included with the ``fed3bandit`` package.
-In a new python file copy the following:
+In a new python file type and execute the following:
 
 .. code-block:: python
 
