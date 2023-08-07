@@ -266,13 +266,13 @@ def reversal_peh(data_choices, min_max, return_avg = False):
     """
     f_data_choices = filter_data(data_choices)
     try:
-        device_number = f_data_choices["fed3DeviceNumber"]
+        prob_right = f_data_choices["fed3ProbRight"]
         event = f_data_choices["fed3EventActive"]
     except:
-        device_number = f_data_choices["Device_Number"]
+        prob_right = f_data_choices["Prob_right"]
         event = f_data_choices["Event"]
     
-    switches = np.where(np.diff(device_number) != 0)[0] + 1
+    switches = np.where(np.diff(prob_right) != 0)[0] + 1
     switches = switches[np.logical_and(switches+min_max[0] > 0, switches+min_max[1] < data_choices.shape[0])]
 
     all_trials = []
@@ -281,7 +281,7 @@ def reversal_peh(data_choices, min_max, return_avg = False):
         counter = 0
         for i in range(min_max[0],min_max[1]):
             c_choice = event.iloc[switch+i]
-            c_prob_right = device_number.iloc[switch+i]
+            c_prob_right = prob_right.iloc[switch+i]
             if c_prob_right < 50:
                 c_high = "Left"
             elif c_prob_right > 50:
