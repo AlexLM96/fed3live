@@ -149,8 +149,11 @@ def update_date_range(group_check, file, group1, group2):
                 all_end_dates.append(end_date)
             
             latest_start = max(all_start_dates)
-            
             earliest_end = min(all_end_dates)
+            if latest_start > earliest_end:
+                start_date = (datetime.datetime.today() + datetime.timedelta(days=1)).date()
+                end_date = (datetime.datetime.today() + datetime.timedelta(days=1)).date()
+                return start_date, end_date, start_date, end_date, True
 
             return latest_start, earliest_end, latest_start, earliest_end, False
 
@@ -202,8 +205,13 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
         
     elif group_check == [' Group Analysis']:
         if (group1 != None) and (group2 != None):
+            
             dt_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
             dt_end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+            if (dt_start_date > datetime.datetime.today().date()) or (dt_end_date > datetime.datetime.today().date()):
+                return [0],[0], True, True, 0, 0
+
             all_start_times = []
             all_end_times = []
             for mouse in (group1+group2):
@@ -229,7 +237,7 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
             return list(start_options), list(end_options), False, False, latest_str, earliest_str
     
         else:
-            return [],[], True, True, 0, 0
+            return [0],[0], True, True, 0, 0
 
 
 
@@ -305,7 +313,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
         if analysis_type != None:
             if analysis_type == "Overview":
                 cb_actions = f3b.binned_paction(c_slice, 5)
-                c_prob = f3b.filter_data(c_slice)["Session_type"].iloc[5:] / 100
+                c_prob = f3b.filter_data(c_slice)["Prob_left"].iloc[5:] / 100
                 c_trials = np.arange(len(cb_actions)) 
                 c_analysis.append(pd.DataFrame({"Trial": c_trials, "True P(left)": c_prob, "Mouse P(left)": cb_actions}))
 
@@ -336,9 +344,11 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                 c_plogreg = f3b.logit_regr(c_preX)
                 c_pcoeffs = c_plogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_pcoeffs}))
+                y_min = np.min(c_pcoeffs)
+                y_max = np.max(c_pcoeffs)
 
                 figure.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_pcoeffs))
-                figure.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[-0.5,2.5], font = dict(size = 16), transition_duration=200)
+                figure.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[y_min-0.5,y_max+0.5], font = dict(size = 16), transition_duration=200)
 
             elif analysis_type == "Logistic losses":
                 c_siden_rew = f3b.side_nrewards(c_slice)
@@ -346,9 +356,11 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                 c_nlogreg = f3b.logit_regr(c_npreX)
                 c_ncoeffs = c_nlogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_ncoeffs}))
+                y_min = np.min(c_ncoeffs)
+                y_max = np.max(c_ncoeffs)
 
                 figure.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_ncoeffs))
-                figure.update_layout(title = {'text': "Logistic losses", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[-0.5,2.5], font = dict(size = 16), transition_duration=200)
+                figure.update_layout(title = {'text': "Logistic losses", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[y_min-0.5,y_max+0.5], font = dict(size = 16), transition_duration=200)
 
         return figure
 
@@ -370,8 +382,8 @@ def func(n_clicks, filename, analysis_type):
         return None
 
 
-#if __name__ == '__main__':
-    #app.run_server(debug=True)
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
 def start_gui():
     app.run_server(debug=True)
