@@ -1,5 +1,5 @@
 
-FED3Bandit
+Task Overview and Hardware
 ===============================
 
 .. toctree::
