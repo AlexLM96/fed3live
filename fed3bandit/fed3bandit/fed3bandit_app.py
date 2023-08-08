@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, Input, Output, dash_table, State
+from dash import Dash, dcc, html, Input, Output, dash_table, State, ctx
 import dash_bootstrap_components as dbc
 import datetime
 import pandas as pd
@@ -28,7 +28,7 @@ app.layout = dbc.Container([
             dbc.Row(dcc.Upload(children=dbc.Button('Upload File', outline=True, color="primary", size="lg", className="me-1"), multiple=False, id="upload_csv")),
             dbc.Row([
                 dbc.Col(html.H3("Files", style = {"textAlign": 'center','padding': 10})),
-                dbc.Col(dbc.Button('Clear', outline=True, color="link", size="sm", className="me-1", style ={'padding': 10}))
+                dbc.Col(dbc.Button('Clear', id="clear_button", outline=True, color="link", size="sm", className="me-1", style ={'padding': 10}))
             ]),
             dcc.Dropdown(id="my_files", options = file_names),
             dbc.Row(html.H3("Analysis", style = {"textAlign": 'center','padding': 10})),
@@ -68,16 +68,25 @@ app.layout = dbc.Container([
 @app.callback(
         Output("my_files", "options"),
         Input("upload_csv", "contents"),
+        Input("clear_button", "n_clicks"),
         State("upload_csv", "filename"),
+        
         prevent_initial_call=True
 )
-def update_output(list_of_contents, filenames):
+def update_output(list_of_contents, clear_press, filenames):
+    global file_data
+    global file_names
+    
     if list_of_contents is not None:
         content_type, content_string = list_of_contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         file_data[filenames[:12]]=f3b.filter_data(df)
         file_names.append(filenames[:12])
+
+    if "clear_button" == ctx.triggered_id:
+        file_data = {}
+        file_names = []
         
     return file_names
 
