@@ -198,15 +198,24 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
 
             start_slice = c_df[c_dates == dt_start_date]
             start_time = pd.to_datetime(start_slice.iloc[:,0]).dt.time.iloc[0]
-            start_options = np.arange(int(str(start_time)[:2]),24)
-
             end_slice = c_df[c_dates == dt_end_date]
             end_time = pd.to_datetime(end_slice.iloc[:,0]).dt.time.iloc[-1]
-            last_option = int(str(end_time)[:2])
-            end_options = np.arange(0,last_option+1)
+            
+            print(dt_start_date, dt_end_date)
+            print(start_time, end_time)
+            if dt_start_date == dt_end_date:
+                start_options = np.arange(int(str(start_time)[:2]),int(str(end_time)[:2])+1)
+                end_options = np.arange(int(str(start_time)[:2])+1, int(str(end_time)[:2])+2)
+                print(start_options, end_options)
+            else:
+                start_options = np.arange(int(str(start_time)[:2]),24)
+                end_options = np.arange(0,int(str(end_time))+1)
+
+            first_option = str(start_options[0])
+            last_option = str(end_options[-1])
 
 
-            return list(start_options), list(end_options), False, False, str(start_time)[:2], str(last_option)
+            return list(start_options), list(end_options), False, False, first_option, last_option
         
         else:
             return [0],[0], True, True, 0, 0
