@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fed3bandit"
-version = "0.0.3"
+version = "0.0.4"
 description="Package to analyze FED3Bandit files."
 readme = "README.md"
 authors = [{ name = "Alex Legaria", email = "leg.alex96@gmail.com"}]
