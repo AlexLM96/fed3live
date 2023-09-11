@@ -46,6 +46,8 @@ def filter_data(data_choices):
                                                                 data_choices["Event"]!="RightinTimeout",
                                                                 data_choices["Event"]!="LeftDuringDispense",
                                                                 data_choices["Event"]!="RightDuringDispense",
+                                                                data_choices["Event"]!="LeftWithPellet",
+                                                                data_choices["Event"]!="RightWithPellet",
                                                                 data_choices["Event"]!="LeftShort",
                                                                 data_choices["Event"]!="RightShort"))]
     except:
@@ -54,6 +56,8 @@ def filter_data(data_choices):
                                                                 data_choices["fed3EventActive"]!="RightinTimeout",
                                                                 data_choices["fed3EventActive"]!="LeftDuringDispense",
                                                                 data_choices["fed3EventActive"]!="RightDuringDispense",
+                                                                data_choices["Event"]!="LeftWithPellet",
+                                                                data_choices["Event"]!="RightWithPellet",
                                                                 data_choices["fed3EventActive"]!="LeftShort",
                                                                 data_choices["fed3EventActive"]!="RightShort"))]
     
@@ -91,6 +95,31 @@ def binned_paction(data_choices, window=5):
         p_left.append(c_p_left)
         
     return p_left
+
+def true_probs(data_choices, offset=5):
+    """Extracts true reward probabilities from Fed3bandit file
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+    offset : int
+        Event number in which the extraction will start
+
+    Returns
+    --------
+    left_probs : pandas.Series
+        True reward probabilities of left port
+
+    right_probs : pandas.Series
+        True reward probabilities of right port
+    """
+
+    f_data_choices = filter_data(data_choices)
+    left_probs = f_data_choices["Prob_left"].iloc[offset:] / 100
+    right_probs = f_data_choices["Prob_right"].iloc[offset:] / 100
+
+    return left_probs, right_probs
 
 def count_pellets(data_choices):
     """Counts the number of pellets in fed3 data file
@@ -237,13 +266,13 @@ def reversal_peh(data_choices, min_max, return_avg = False):
     """
     f_data_choices = filter_data(data_choices)
     try:
-        device_number = f_data_choices["fed3DeviceNumber"]
+        prob_right = f_data_choices["fed3ProbRight"]
         event = f_data_choices["fed3EventActive"]
     except:
-        device_number = f_data_choices["Device_Number"]
+        prob_right = f_data_choices["Prob_right"]
         event = f_data_choices["Event"]
     
-    switches = np.where(np.diff(device_number) != 0)[0] + 1
+    switches = np.where(np.diff(prob_right) != 0)[0] + 1
     switches = switches[np.logical_and(switches+min_max[0] > 0, switches+min_max[1] < data_choices.shape[0])]
 
     all_trials = []
@@ -252,7 +281,7 @@ def reversal_peh(data_choices, min_max, return_avg = False):
         counter = 0
         for i in range(min_max[0],min_max[1]):
             c_choice = event.iloc[switch+i]
-            c_prob_right = device_number.iloc[switch+i]
+            c_prob_right = prob_right.iloc[switch+i]
             if c_prob_right < 50:
                 c_high = "Left"
             elif c_prob_right > 50:

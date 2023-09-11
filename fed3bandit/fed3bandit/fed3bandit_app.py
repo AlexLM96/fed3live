@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, Input, Output, dash_table, State
+from dash import Dash, dcc, html, Input, Output, dash_table, State, ctx
 import dash_bootstrap_components as dbc
 import datetime
 import pandas as pd
@@ -16,7 +16,6 @@ file_names = []
 file_data = {}
 data_analyses = ["Overview", "Win-stay/Lose-shift", "Reversal peh", "Logistic wins", "Logistic losses"]
 c_analysis = []
-group_clicks = 0
 
 #%%
 
@@ -29,7 +28,7 @@ app.layout = dbc.Container([
             dbc.Row(dcc.Upload(children=dbc.Button('Upload File', outline=True, color="primary", size="lg", className="me-1"), multiple=False, id="upload_csv")),
             dbc.Row([
                 dbc.Col(html.H3("Files", style = {"textAlign": 'center','padding': 10})),
-                dbc.Col(dbc.Button('Clear', outline=True, color="link", size="sm", className="me-1", style ={'padding': 10}))
+                dbc.Col(dbc.Button('Clear', id="clear_button", outline=True, color="link", size="sm", className="me-1", style ={'padding': 10}))
             ]),
             dcc.Dropdown(id="my_files", options = file_names),
             dbc.Row(html.H3("Analysis", style = {"textAlign": 'center','padding': 10})),
@@ -69,16 +68,25 @@ app.layout = dbc.Container([
 @app.callback(
         Output("my_files", "options"),
         Input("upload_csv", "contents"),
+        Input("clear_button", "n_clicks"),
         State("upload_csv", "filename"),
+        
         prevent_initial_call=True
 )
-def update_output(list_of_contents, filenames):
+def update_output(list_of_contents, clear_press, filenames):
+    global file_data
+    global file_names
+    
     if list_of_contents is not None:
         content_type, content_string = list_of_contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
         file_data[filenames[:12]]=f3b.filter_data(df)
         file_names.append(filenames[:12])
+
+    if "clear_button" == ctx.triggered_id:
+        file_data = {}
+        file_names = []
         
     return file_names
 
@@ -149,8 +157,11 @@ def update_date_range(group_check, file, group1, group2):
                 all_end_dates.append(end_date)
             
             latest_start = max(all_start_dates)
-            
             earliest_end = min(all_end_dates)
+            if latest_start > earliest_end:
+                start_date = (datetime.datetime.today() + datetime.timedelta(days=1)).date()
+                end_date = (datetime.datetime.today() + datetime.timedelta(days=1)).date()
+                return start_date, end_date, start_date, end_date, True
 
             return latest_start, earliest_end, latest_start, earliest_end, False
 
@@ -187,23 +198,37 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
 
             start_slice = c_df[c_dates == dt_start_date]
             start_time = pd.to_datetime(start_slice.iloc[:,0]).dt.time.iloc[0]
-            start_options = np.arange(int(str(start_time)[:2]),24)
-
             end_slice = c_df[c_dates == dt_end_date]
             end_time = pd.to_datetime(end_slice.iloc[:,0]).dt.time.iloc[-1]
-            last_option = int(str(end_time)[:2])
-            end_options = np.arange(0,last_option+1)
+            
+            print(dt_start_date, dt_end_date)
+            print(start_time, end_time)
+            if dt_start_date == dt_end_date:
+                start_options = np.arange(int(str(start_time)[:2]),int(str(end_time)[:2])+1)
+                end_options = np.arange(int(str(start_time)[:2])+1, int(str(end_time)[:2])+2)
+                print(start_options, end_options)
+            else:
+                start_options = np.arange(int(str(start_time)[:2]),24)
+                end_options = np.arange(0,int(str(end_time))+1)
+
+            first_option = str(start_options[0])
+            last_option = str(end_options[-1])
 
 
-            return list(start_options), list(end_options), False, False, str(start_time)[:2], str(last_option)
+            return list(start_options), list(end_options), False, False, first_option, last_option
         
         else:
             return [0],[0], True, True, 0, 0
         
     elif group_check == [' Group Analysis']:
         if (group1 != None) and (group2 != None):
+            
             dt_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
             dt_end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+            if (dt_start_date > datetime.datetime.today().date()) or (dt_end_date > datetime.datetime.today().date()):
+                return [0],[0], True, True, 0, 0
+
             all_start_times = []
             all_end_times = []
             for mouse in (group1+group2):
@@ -229,7 +254,7 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
             return list(start_options), list(end_options), False, False, latest_str, earliest_str
     
         else:
-            return [],[], True, True, 0, 0
+            return [0],[0], True, True, 0, 0
 
 
 
@@ -245,17 +270,17 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
         State("my_files", "value"),
         State("group 1", "value"),
         State("group 2", "value"),
+        State("group_analysis", "value"),
         prevent_initial_call = True
 )
-def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_time, end_time, file, group1, group2):
+def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_time, end_time, file, group1, group2, group_check):
     global c_analysis
-    global group_clicks
-    global single_clicks
-    figure = go.Figure()
+    
     start_datetime = datetime.datetime.strptime(start_date+" "+str(start_time), "%Y-%m-%d %H")
     end_datetime = datetime.datetime.strptime(end_date+" "+str(end_time), "%Y-%m-%d %H")
-    if g_clicks:
-        group_clicks = g_clicks
+    if g_clicks and group_check == [' Group Analysis']:
+        print("Group click")
+        figure_g = go.Figure()
         if (len(group1)>0) and (len(group2)>0):
             g1_slices = {}
             g2_slices = {}
@@ -286,16 +311,101 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                     x_ws = ["win-stay"]
                     x_ls = ["lose-shift"]
 
+                    figure_g.add_trace(go.Box(x=x_ws*len(list(all_ws_g1.keys())), y= list(all_ws_g1.values()), name="Group 1"))
+                    figure_g.add_trace(go.Box(x=x_ws*len(list(all_ws_g2.keys())), y= list(all_ws_g2.values()), name="Group 2"))
+                    figure_g.add_trace(go.Box(x=x_ls*len(list(all_ls_g1.keys())), y= list(all_ls_g2.values()), name="Group 1"))
+                    figure_g.add_trace(go.Box(x=x_ls*len(list(all_ls_g1.keys())), y= list(all_ls_g2.values()), name="Group 2"))
+                    figure_g.update_layout(title = {'text': "Mouse Win-Stay/Lose-Shift ", 'x': 0.5}, boxmode="group", yaxis_title = "Proportion", font = dict(size = 16), yaxis_range = [0,1],xaxis= dict(tickvals = [0,1], ticktext = ["Win-Stay", "Lose-Shift"]), transition_duration=200)
 
-                    figure.add_trace(go.Box(x=x_ws*len(list(all_ws_g1.keys())), y= list(all_ws_g1.values()), name="Group 1"))
-                    figure.add_trace(go.Box(x=x_ws*len(list(all_ws_g2.keys())), y= list(all_ws_g2.values()), name="Group 2"))
-                    figure.add_trace(go.Box(x=x_ls*len(list(all_ls_g1.keys())), y= list(all_ls_g2.values()), name="Group 1"))
-                    figure.add_trace(go.Box(x=x_ls*len(list(all_ls_g1.keys())), y= list(all_ls_g2.values()), name="Group 2"))
-                    figure.update_layout(title = {'text': "Mouse Win-Stay/Lose-Shift ", 'x': 0.5}, boxmode="group", yaxis_title = "Proportion", font = dict(size = 16), yaxis_range = [0,1],xaxis= dict(tickvals = [0,1], ticktext = ["Win-Stay", "Lose-Shift"]), transition_duration=200)
+                
+                elif analysis_type == "Reversal peh":
+                    rpeh_g1 = {mouse: f3b.reversal_peh(g1_slices[mouse], (-10,11)).mean(axis=0) for mouse in g1_slices}
+                    rpeh_g2 = {mouse: f3b.reversal_peh(g2_slices[mouse], (-10,11)).mean(axis=0) for mouse in g2_slices}
 
-                    return figure
+                    a_rpeh_g1 = np.vstack(list(rpeh_g1.values()))
+                    g1_mean = a_rpeh_g1.mean(axis=0)
+                    g1_std = a_rpeh_g1.std(axis=0)
+                    g1_upper = g1_mean + g1_std
+                    g1_lower = g1_mean - g1_std
 
-    elif i_clicks:
+                    a_rpeh_g2 = np.vstack(list(rpeh_g2.values()))
+                    g2_mean = a_rpeh_g2.mean(axis=0)
+                    g2_std = a_rpeh_g2.std(axis=0)
+                    g2_upper = g2_mean + g2_std
+                    g2_lower = g2_mean - g2_std
+
+                    c_analysis.append(pd.DataFrame({"Trial from reversal": np.arange(-10,11), 
+                                                    "Group1 mean": g1_mean,
+                                                    "Group1 std": g1_std,
+                                                    "Group2 mean": g2_mean,
+                                                    "Group2 std": g2_std}))
+                    
+                    figure_g.add_trace(go.Scatter(x=np.arange(-10,11),y=g1_mean, mode='lines'))
+                    figure_g.add_trace(go.Scatter(x=np.arange(-10,11),y=g2_mean, mode='lines'))
+                    figure_g.update_layout(title = {'text': "Reversal PEH", 'x': 0.5}, xaxis_title = "Trial", yaxis_title = "P(High)", yaxis_range=[0,1], font = dict(size = 16), transition_duration=200)
+
+                elif analysis_type == "Logistic wins":
+                    g1_sidep_rew = {mouse: f3b.side_prewards(g1_slices[mouse]) for mouse in g1_slices}
+                    g1_preX = {mouse: f3b.create_X(g1_slices[mouse], g1_sidep_rew[mouse][0], g1_sidep_rew[mouse][1],5) for mouse in g1_slices}
+                    g1_plogreg = {mouse: f3b.logit_regr(g1_preX[mouse]) for mouse in g1_sidep_rew}
+                    g1_params = {mouse: g1_plogreg[mouse].params for mouse in g1_plogreg}
+                    
+                    a_g1_params = np.vstack(list(g1_params.values()))
+                    g1_params_mean = a_g1_params.mean(axis=0)
+                    g1_params_std = a_g1_params.std(axis=0)
+
+                    g2_sidep_rew = {mouse: f3b.side_prewards(g2_slices[mouse]) for mouse in g2_slices}
+                    g2_preX = {mouse: f3b.create_X(g2_slices[mouse], g2_sidep_rew[mouse][0], g2_sidep_rew[mouse][1],5) for mouse in g2_slices}
+                    g2_plogreg = {mouse: f3b.logit_regr(g2_preX[mouse]) for mouse in g2_sidep_rew}
+                    g2_params = {mouse: g2_plogreg[mouse].params for mouse in g2_plogreg}
+                    
+                    a_g2_params = np.vstack(list(g2_params.values()))
+                    g2_params_mean = a_g2_params.mean(axis=0)
+                    g2_params_std = a_g2_params.std(axis=0)
+
+                    c_analysis.append(pd.DataFrame({"Trial in past": np.arange(-5,0), 
+                                "Group1 mean": g1_params_mean,
+                                "Group1 std": g1_params_std,
+                                "Group2 mean": g2_params_mean,
+                                "Group2 std": g2_params_std}))
+
+                    figure_g.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=g1_params_mean))
+                    figure_g.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=g2_params_mean))
+                    figure_g.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", font = dict(size = 16), transition_duration=200)
+
+                elif analysis_type == "Logistic losses":
+                    g1_siden_rew = {mouse: f3b.side_nrewards(g1_slices[mouse]) for mouse in g1_slices}
+                    g1_npreX = {mouse: f3b.create_X(g1_slices[mouse], g1_siden_rew[mouse][0], g1_siden_rew[mouse][1],5) for mouse in g1_slices}
+                    g1_nlogreg = {mouse: f3b.logit_regr(g1_npreX[mouse]) for mouse in g1_siden_rew}
+                    g1_nparams = {mouse: g1_nlogreg[mouse].params for mouse in g1_nlogreg}
+                    
+                    a_g1_nparams = np.vstack(list(g1_nparams.values()))
+                    g1_nparams_mean = a_g1_nparams.mean(axis=0)
+                    g1_nparams_std = a_g1_nparams.std(axis=0)
+
+                    g2_siden_rew = {mouse: f3b.side_nrewards(g2_slices[mouse]) for mouse in g2_slices}
+                    g2_npreX = {mouse: f3b.create_X(g2_slices[mouse], g2_siden_rew[mouse][0], g2_siden_rew[mouse][1],5) for mouse in g2_slices}
+                    g2_nlogreg = {mouse: f3b.logit_regr(g2_npreX[mouse]) for mouse in g2_siden_rew}
+                    g2_nparams = {mouse: g2_nlogreg[mouse].params for mouse in g2_nlogreg}
+                    
+                    a_g2_nparams = np.vstack(list(g2_nparams.values()))
+                    g2_nparams_mean = a_g2_nparams.mean(axis=0)
+                    g2_nparams_std = a_g2_nparams.std(axis=0)
+
+                    c_analysis.append(pd.DataFrame({"Trial in past": np.arange(-5,0), 
+                                "Group1 mean": g1_nparams_mean,
+                                "Group1 std": g1_nparams_std,
+                                "Group2 mean": g2_nparams_mean,
+                                "Group2 std": g2_nparams_std}))
+
+                    figure_g.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=g1_nparams_mean))
+                    figure_g.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=g2_nparams_mean))
+                    figure_g.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", font = dict(size = 16), transition_duration=200)
+
+        return figure_g
+
+    if i_clicks:
+        figure_i = go.Figure()
         if file != None:
             c_df = file_data[file]
             c_df.iloc[:,0] = pd.to_datetime(c_df.iloc[:,0])
@@ -305,13 +415,13 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
         if analysis_type != None:
             if analysis_type == "Overview":
                 cb_actions = f3b.binned_paction(c_slice, 5)
-                c_prob = f3b.filter_data(c_slice)["Session_type"].iloc[5:] / 100
+                c_prob = f3b.filter_data(c_slice)["Prob_left"].iloc[5:] / 100
                 c_trials = np.arange(len(cb_actions)) 
                 c_analysis.append(pd.DataFrame({"Trial": c_trials, "True P(left)": c_prob, "Mouse P(left)": cb_actions}))
 
-                figure.add_trace(go.Scatter(x=c_trials, y = cb_actions, showlegend=False))
-                figure.add_trace(go.Scatter(x=c_trials, y = c_prob, showlegend=False))
-                figure.update_layout(title = {'text': "Actions", 'x': 0.5}, xaxis_title = "Trial", yaxis_title = "P(left)", 
+                figure_i.add_trace(go.Scatter(x=c_trials, y = cb_actions, showlegend=False))
+                figure_i.add_trace(go.Scatter(x=c_trials, y = c_prob, showlegend=False))
+                figure_i.update_layout(title = {'text': "Actions", 'x': 0.5}, xaxis_title = "Trial", yaxis_title = "P(left)", 
                                 font = dict(size = 16), transition_duration=200)
             
             elif analysis_type == "Win-stay/Lose-shift":
@@ -319,16 +429,16 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                 c_ls = f3b.lose_shift(c_slice)
                 c_analysis.append(pd.DataFrame({"Win-stay": [c_ws], "Lose-shift": [c_ls]}))
 
-                figure.add_trace(go.Bar(x=[0,1], y= [c_ws, c_ls]))
-                figure.update_layout(title = {'text': "Mouse Win-Stay/Lose-Shift ", 'x': 0.5}, yaxis_title = "Proportion", font = dict(size = 16), yaxis_range = [0,1],
+                figure_i.add_trace(go.Bar(x=[0,1], y= [c_ws, c_ls]))
+                figure_i.update_layout(title = {'text': "Mouse Win-Stay/Lose-Shift ", 'x': 0.5}, yaxis_title = "Proportion", font = dict(size = 16), yaxis_range = [0,1],
                                 xaxis= dict(tickvals = [0,1], ticktext = ["Win-Stay", "Lose-Shift"]), transition_duration=200)
                 
             elif analysis_type == "Reversal peh":
                 c_rev_peh = f3b.reversal_peh(c_slice, (-10,11)).mean(axis=0)
                 c_analysis.append(pd.DataFrame({"Trial from reversal": np.arange(-10,11), "P(High)": c_rev_peh}))
 
-                figure.add_trace(go.Scatter(x=np.arange(-10,11),y=c_rev_peh, mode='lines', showlegend = False))
-                figure.update_layout(title = {'text': "Reversal PEH", 'x': 0.5}, xaxis_title = "Trial", yaxis_title = "P(High)", yaxis_range=[0,1], font = dict(size = 16), transition_duration=200)
+                figure_i.add_trace(go.Scatter(x=np.arange(-10,11),y=c_rev_peh, mode='lines', showlegend = False))
+                figure_i.update_layout(title = {'text': "Reversal PEH", 'x': 0.5}, xaxis_title = "Trial", yaxis_title = "P(High)", yaxis_range=[0,1], font = dict(size = 16), transition_duration=200)
             
             elif analysis_type == "Logistic wins":
                 c_sidep_rew = f3b.side_prewards(c_slice)
@@ -336,9 +446,11 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                 c_plogreg = f3b.logit_regr(c_preX)
                 c_pcoeffs = c_plogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_pcoeffs}))
+                y_min = np.min(c_pcoeffs)
+                y_max = np.max(c_pcoeffs)
 
-                figure.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_pcoeffs))
-                figure.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[-0.5,2.5], font = dict(size = 16), transition_duration=200)
+                figure_i.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_pcoeffs))
+                figure_i.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[y_min-0.5,y_max+0.5], font = dict(size = 16), transition_duration=200)
 
             elif analysis_type == "Logistic losses":
                 c_siden_rew = f3b.side_nrewards(c_slice)
@@ -346,11 +458,13 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                 c_nlogreg = f3b.logit_regr(c_npreX)
                 c_ncoeffs = c_nlogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_ncoeffs}))
+                y_min = np.min(c_ncoeffs)
+                y_max = np.max(c_ncoeffs)
 
-                figure.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_ncoeffs))
-                figure.update_layout(title = {'text': "Logistic losses", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[-0.5,2.5], font = dict(size = 16), transition_duration=200)
+                figure_i.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_ncoeffs))
+                figure_i.update_layout(title = {'text': "Logistic losses", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[y_min-0.5,y_max+0.5], font = dict(size = 16), transition_duration=200)
 
-        return figure
+        return figure_i
 
 
 
@@ -370,8 +484,8 @@ def func(n_clicks, filename, analysis_type):
         return None
 
 
-#if __name__ == '__main__':
-    #app.run_server(debug=True)
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
 def start_gui():
     app.run_server(debug=True)

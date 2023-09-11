@@ -1,9 +1,11 @@
 # Packaging
 fed3bandit.egg-info
 build/
+dist/
 
 # Docs
 docs/build/
 
 #Cache
 fed3bandit/fed3bandit/__pycache__/
+fed3bandit/__pycache__/
