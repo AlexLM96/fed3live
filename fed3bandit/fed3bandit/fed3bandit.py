@@ -96,7 +96,7 @@ def binned_paction(data_choices, window=5):
         
     return p_left
 
-def true_probs(data_choices, offset=5):
+def true_probs(data_choices, offset=5, alt_left="Session_type", alt_right="Device_Number"):
     """Extracts true reward probabilities from Fed3bandit file
     
     Parameters
@@ -116,8 +116,12 @@ def true_probs(data_choices, offset=5):
     """
 
     f_data_choices = filter_data(data_choices)
-    left_probs = f_data_choices["Prob_left"].iloc[offset:] / 100
-    right_probs = f_data_choices["Prob_right"].iloc[offset:] / 100
+    try:
+        left_probs = f_data_choices["Prob_left"].iloc[offset:] / 100
+        right_probs = f_data_choices["Prob_right"].iloc[offset:] / 100
+    except:
+        left_probs = f_data_choices[alt_left].iloc[offset:] / 100
+        right_probs = f_data_choices[alt_right].iloc[offset:] / 100
 
     return left_probs, right_probs
 
@@ -136,10 +140,7 @@ def count_pellets(data_choices):
     """
 
     f_data_choices = filter_data(data_choices)
-    try:
-        block_pellet_count = f_data_choices["fed3BlockPelletCount"]
-    except:
-        block_pellet_count = f_data_choices["Block_Pellet_Count"]
+    block_pellet_count = f_data_choices["Block_Pellet_Count"]
       
     c_diff = np.diff(block_pellet_count)
     c_diff2 = np.where(c_diff < 0, 1, c_diff)
@@ -162,14 +163,9 @@ def count_pokes(data_choices):
     """
     
     f_data_choices = filter_data(data_choices)
-    try:
-        left_count = f_data_choices["fed3LeftCount"]
-        right_count = f_data_choices["fed3RightCount"]
-    except:
-        left_count = f_data_choices["Left_Poke_Count"]
-        right_count = f_data_choices["Right_Poke_Count"]
+    left_count = f_data_choices["Left_Poke_Count"]
+    right_count = f_data_choices["Right_Poke_Count"]
     
-
     c_left_diff = np.diff(left_count)
     c_left_diff2 = np.where(np.logical_or(c_left_diff < 0, c_left_diff > 1), 1, c_left_diff)
     
@@ -205,7 +201,7 @@ def pokes_per_pellet(data_choices):
     
     return ppp
 
-def poke_accuracy(data_choices, return_avg=False):
+def accuracy(data_choices, return_avg=True, alt_left="Session_type", alt_right="Device_Number"):
     """Calculates pokes per pellets from fed3 bandit file
     
     Parameters
@@ -223,24 +219,26 @@ def poke_accuracy(data_choices, return_avg=False):
 
     f_data_choices = filter_data(data_choices)
     try:
-        events = f_data_choices["Event"]
-        prob_left = f_data_choices["Session_type"]
-        prob_right = f_data_choices["Device_Number"]
+        left_probs = f_data_choices["Prob_left"]
+        right_probs = f_data_choices["Prob_right"]
     except:
-        events = f_data_choices["fed3EventActive"]
-        prob_left = f_data_choices["fed3SessionType"]
-        prob_right = f_data_choices["fed3DeviceNumber"]
+        left_probs = f_data_choices[alt_left]
+        right_probs = f_data_choices[alt_right]
 
-    high_pokes = np.logical_or(np.logical_and(events == "Left", prob_left > prob_right), 
-                               np.logical_and(events == "Right", prob_left < prob_right))
-    high_pokes = np.where(prob_left == prob_right, np.nan, high_pokes)
+    events = f_data_choices["Event"]
+    try:
+        high_pokes = f_data_choices["High_prob_poke"]
+    except:
+        high_pokes = np.where(left_probs > right_probs, "Left", "Right")
     
-    if return_avg:
-        return high_pokes.mean()
-    else:
-        return high_pokes
+    correct_pokes = events == high_pokes
 
-def reversal_peh(data_choices, min_max, return_avg = False):
+    if return_avg:
+        return correct_pokes.mean()
+    else:
+        return correct_pokes
+
+def reversal_peh(data_choices, min_max, return_avg = False, alt_right = "Device_Number"):
     """Calculates the probability of poking in the high probability port around contingency switches
     from fed3 data file
     
@@ -266,12 +264,11 @@ def reversal_peh(data_choices, min_max, return_avg = False):
     """
     f_data_choices = filter_data(data_choices)
     try:
-        prob_right = f_data_choices["fed3ProbRight"]
-        event = f_data_choices["fed3EventActive"]
-    except:
         prob_right = f_data_choices["Prob_right"]
-        event = f_data_choices["Event"]
-    
+    except:
+        prob_right = f_data_choices[alt_right]
+
+    event = f_data_choices["Event"]
     switches = np.where(np.diff(prob_right) != 0)[0] + 1
     switches = switches[np.logical_and(switches+min_max[0] > 0, switches+min_max[1] < data_choices.shape[0])]
 
@@ -319,12 +316,8 @@ def win_stay(data_choices):
         win-stay probability
     """
     f_data_choices = filter_data(data_choices)
-    try:
-        block_pellet_count = f_data_choices["fed3BlockPelletCount"]
-        events = f_data_choices["fed3EventActive"]
-    except:
-        block_pellet_count = f_data_choices["Block_Pellet_Count"]
-        events = f_data_choices["Event"]
+    block_pellet_count = f_data_choices["Block_Pellet_Count"]
+    events = f_data_choices["Event"]
         
     win_stay = 0
     win_shift = 0
@@ -369,12 +362,8 @@ def lose_shift(data_choices):
         lose-shift probability
     """
     f_data_choices = filter_data(data_choices)
-    try:
-        block_pellet_count = f_data_choices["fed3BlockPelletCount"]
-        events = f_data_choices["fed3EventActive"]
-    except:
-        block_pellet_count = f_data_choices["Block_Pellet_Count"]
-        events = f_data_choices["Event"]
+    block_pellet_count = f_data_choices["Block_Pellet_Count"]
+    events = f_data_choices["Event"]
     
     lose_stay = 0
     lose_shift = 0
@@ -421,12 +410,8 @@ def side_prewards(data_choices):
         lose-shift probability
     """
     f_data_choices = filter_data(data_choices)
-    try:
-        block_pellet_count = f_data_choices["fed3BlockPelletCount"]
-        events = f_data_choices["fed3EventActive"]
-    except:
-        block_pellet_count = f_data_choices["Block_Pellet_Count"]
-        events = f_data_choices["Event"]
+    block_pellet_count = f_data_choices["Block_Pellet_Count"]
+    events = f_data_choices["Event"]
     
     left_reward = []
     right_reward = []
@@ -466,12 +451,8 @@ def side_nrewards(data_choices):
         lose-shift probability
     """
     f_data_choices = filter_data(data_choices)
-    try:
-        block_pellet_count = f_data_choices["fed3BlockPelletCount"]
-        events = f_data_choices["fed3EventActive"]
-    except:
-        block_pellet_count = f_data_choices["Block_Pellet_Count"]
-        events = f_data_choices["Event"]
+    block_pellet_count = f_data_choices["Block_Pellet_Count"]
+    events = f_data_choices["Event"]
     
     left_nreward = []
     right_nreward = []
@@ -516,10 +497,7 @@ def create_X(data_choices, left_reward, right_reward, n_feats):
         Matrix with choice and interaction of choice*trial for the past n_feats trials
     """
     f_data_choices = filter_data(data_choices)
-    try:
-        events = f_data_choices["fed3EventActive"]
-    except:
-        events = f_data_choices["Event"]
+    events = f_data_choices["Event"]
     
     reward_diff = np.subtract(left_reward,right_reward)
     X_dict = {}
@@ -554,7 +532,7 @@ def logit_regr(X_df):
     c_X = X_df.iloc[:,1:].astype(int).to_numpy()
     c_y = [1 if choice == "Left" else 0 for choice in X_df["Choice"]]
    
-    c_regr =sm.Logit(c_y, c_X).fit()
+    c_regr =sm.Logit(c_y, c_X, missing="drop", disp=False).fit()
     
     return c_regr
 
