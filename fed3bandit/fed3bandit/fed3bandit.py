@@ -2,6 +2,7 @@
 This is the main module for analysis of the bandit task.
 """
 
+import copy
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -26,7 +27,7 @@ def load_sampledata():
     sample_data = pd.read_csv(filename)
     return sample_data
 
-def filter_data(data_choices):
+def filter_data(data_choices, skip=[]):
     """Filters the data to only show pokes "Left" or "Right" events, which are pokes that did not occur 
     during time out, or during pellet dispensing.
     
@@ -40,26 +41,17 @@ def filter_data(data_choices):
     filtered_data : pd.DataFrame
         Filtered fed3 data file
     """
-    try:
-        filtered_data = data_choices[np.logical_and.reduce((data_choices["Event"]!="Pellet",
-                                                                data_choices["Event"]!="LeftinTimeOut",
-                                                                data_choices["Event"]!="RightinTimeout",
-                                                                data_choices["Event"]!="LeftDuringDispense",
-                                                                data_choices["Event"]!="RightDuringDispense",
-                                                                data_choices["Event"]!="LeftWithPellet",
-                                                                data_choices["Event"]!="RightWithPellet",
-                                                                data_choices["Event"]!="LeftShort",
-                                                                data_choices["Event"]!="RightShort"))]
-    except:
-        filtered_data = data_choices[np.logical_and.reduce((data_choices["fed3EventActive"]!="Pellet",
-                                                                data_choices["fed3EventActive"]!="LeftinTimeOut",
-                                                                data_choices["fed3EventActive"]!="RightinTimeout",
-                                                                data_choices["fed3EventActive"]!="LeftDuringDispense",
-                                                                data_choices["fed3EventActive"]!="RightDuringDispense",
-                                                                data_choices["Event"]!="LeftWithPellet",
-                                                                data_choices["Event"]!="RightWithPellet",
-                                                                data_choices["fed3EventActive"]!="LeftShort",
-                                                                data_choices["fed3EventActive"]!="RightShort"))]
+    
+    event_types = ["Pellet", "LeftinTimeOut", "RightinTimeout", "LeftDuringDispense", "RightDuringDispense", "LeftWithPellet", "RightWithPellet", "LeftShort", "RightShort"]
+    if len(skip) != 0:
+        for event_type in skip:
+            event_types.remove(event_type)
+
+    filtered_data = copy.deepcopy(data_choices)
+    
+
+    for event_type in event_types:
+        filtered_data = filtered_data[filtered_data["Event"] != event_type]
     
     filtered_data.iloc[:,0] = pd.to_datetime(filtered_data.iloc[:,0])
     
@@ -140,16 +132,62 @@ def count_pellets(data_choices):
     """
 
     f_data_choices = filter_data(data_choices)
-    block_pellet_count = f_data_choices["Block_Pellet_Count"]
+    pellet_count = f_data_choices["Pellet_Count"]
       
-    c_diff = np.diff(block_pellet_count)
+    c_diff = np.diff(pellet_count)
     c_diff2 = np.where(c_diff < 0, 1, c_diff)
     c_pellets = int(c_diff2.sum())
     
     return c_pellets
 
+def count_left_pokes(data_choices):
+    """Counts the number of left pokes in fed3 data file
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+        
+    Returns
+    --------
+    all_pokes : int
+        total number of left pokes
+    """
+
+    f_data_choices = filter_data(data_choices)
+    left_count = f_data_choices["Left_Poke_Count"]
+    c_left_diff = np.diff(left_count)
+    c_left_diff2 = np.where(np.logical_or(c_left_diff < 0, c_left_diff > 1), 1, c_left_diff)
+
+    all_left_pokes = c_left_diff2.sum()
+
+    return all_left_pokes
+
+def count_right_pokes(data_choices):
+    """Counts the number of right pokes in fed3 data file
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+        
+    Returns
+    --------
+    all_right_pokes : int
+        total number of right pokes
+    """
+
+    f_data_choices = filter_data(data_choices)
+    right_count = f_data_choices["Right_Poke_Count"]
+    c_right_diff = np.diff(right_count)
+    c_right_diff2 = np.where(np.logical_or(c_right_diff < 0, c_right_diff > 1), 1, c_right_diff)
+
+    all_right_pokes = c_right_diff2.sum()
+
+    return all_right_pokes
+
 def count_pokes(data_choices):
-    """Counts the number ofpokes in fed3 data file
+    """Counts the number of pokes in fed3 data file
     
     Parameters
     ----------
@@ -161,18 +199,10 @@ def count_pokes(data_choices):
     all_pokes : int
         total number of pellets
     """
-    
-    f_data_choices = filter_data(data_choices)
-    left_count = f_data_choices["Left_Poke_Count"]
-    right_count = f_data_choices["Right_Poke_Count"]
-    
-    c_left_diff = np.diff(left_count)
-    c_left_diff2 = np.where(np.logical_or(c_left_diff < 0, c_left_diff > 1), 1, c_left_diff)
-    
-    c_right_diff = np.diff(right_count)
-    c_right_diff2 = np.where(np.logical_or(c_right_diff < 0, c_right_diff > 1), 1, c_right_diff)
-    
-    all_pokes = c_left_diff2.sum() + c_right_diff2.sum()
+
+    all_left_pokes = count_left_pokes(data_choices)
+    all_right_pokes = count_right_pokes(data_choices)
+    all_pokes = all_left_pokes + all_right_pokes
 
     return all_pokes
 
@@ -237,6 +267,39 @@ def accuracy(data_choices, return_avg=True, alt_left="Session_type", alt_right="
         return correct_pokes.mean()
     else:
         return correct_pokes
+
+def iti_after_win(data_choices):
+    """Calculates latency to next poke after a pellet delivery
+
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+
+    Returns
+    --------
+    iti_win : pandas.Series
+        Latency to next poke after every pellet delivery ("Pellet" event)
+    """
+
+    f_data_choices = filter_data(data_choices, skip=["Pellet"])
+    pellet_idx = np.where(f_data_choices["Event"] == "Pellet")[0][:-1]
+    n_pellet_idx = pellet_idx + 1
+    pellet_ts = f_data_choices.iloc[pellet_idx, 0].reset_index(drop=True)
+    n_pellet_ts = f_data_choices.iloc[n_pellet_idx, 0].reset_index(drop=True)
+    
+    print("New iter")
+    print(f_data_choices["Event"].unique())
+
+    min_rows = np.min([pellet_ts.shape[0], n_pellet_ts.shape[0]])
+
+    pellet_ts = pellet_ts.iloc[:min_rows]
+    n_pellet_ts = n_pellet_ts.iloc[:min_rows]
+    
+    iti_win = (n_pellet_ts - pellet_ts).dt.seconds
+
+    return iti_win
+
 
 def reversal_peh(data_choices, min_max, return_avg = False, alt_right = "Device_Number"):
     """Calculates the probability of poking in the high probability port around contingency switches
@@ -433,7 +496,8 @@ def side_prewards(data_choices):
             else:
                 right_reward.append(0)
                 
-    return left_reward, right_reward
+    
+    return np.subtract(left_reward, right_reward)
 
 def side_nrewards(data_choices):
     """Returns whether the relationship
@@ -474,42 +538,42 @@ def side_nrewards(data_choices):
             else:
                 right_nreward.append(1)
                 
-    return left_nreward, right_nreward
+    return np.subtract(left_nreward, right_nreward)
 
-def create_X(data_choices, left_reward, right_reward, n_feats):
-    """Creates matrix of choice and previouse interaction of choice*reward based on the
-    output of the side_rewards function.
+def create_X(data_choices, metric, n_timesteps):
+    """Creates matrix of choice (event) and the value of a specific metric
+    during immediately previous events. This arranges the format to run a
+    logistic regression (or other GLM).
     
     Parameters
     ----------
     data_choices : pandas.DataFrame
         The fed3 data file
-    left_reward : array-like
-        First output of side_rewards
-    right_reward : array-like
-        Second output of side_rewards
+    metric : array_like
+        The metric (e.g. previous choice, previous reward, etc.) that
+        may influence choice.
     n_feats : int
-        Number of trials in past to be analyzed
+        Number of events in past to be included
         
     Returns
     --------
     X_df : pandas.DataFrame
-        Matrix with choice and interaction of choice*trial for the past n_feats trials
+        Matrix with choice and metric for the past n_timesteps events
     """
+
     f_data_choices = filter_data(data_choices)
     events = f_data_choices["Event"]
     
-    reward_diff = np.subtract(left_reward,right_reward)
     X_dict = {}
-    for i in range(data_choices.shape[0]-n_feats):
-        c_idx = i + n_feats
+    for i in range(metric.shape[0]-n_timesteps):
+        c_idx = i + n_timesteps
         X_dict[c_idx+1] = [events.iloc[c_idx]]
-        for j in range(n_feats):
-            X_dict[c_idx+1].append(reward_diff[c_idx-(j+1)])
+        for j in range(n_timesteps):
+            X_dict[c_idx+1].append(metric[c_idx-(j+1)])
             
     X_df = pd.DataFrame(X_dict).T
     col_names = ["Choice"]
-    for i in range(n_feats):
+    for i in range(n_timesteps):
         col_names.append("Reward diff_t-" + str(i+1))
     
     X_df.columns = col_names
@@ -532,7 +596,7 @@ def logit_regr(X_df):
     c_X = X_df.iloc[:,1:].astype(int).to_numpy()
     c_y = [1 if choice == "Left" else 0 for choice in X_df["Choice"]]
    
-    c_regr =sm.Logit(c_y, c_X, missing="drop", disp=False).fit()
+    c_regr =sm.Logit(c_y, c_X, missing="drop").fit()
     
     return c_regr
 
