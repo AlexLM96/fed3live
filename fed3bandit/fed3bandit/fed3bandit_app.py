@@ -14,7 +14,7 @@ import io
 
 file_names = []
 file_data = {}
-data_analyses = ["Overview", "Win-stay/Lose-shift", "Reversal peh", "Logistic wins", "Logistic losses"]
+data_analyses = ["Overview", "Accuracy", "Win-stay/Lose-shift", "Reversal peh", "Logistic wins", "Logistic losses"]
 c_analysis = []
 
 #%%
@@ -46,8 +46,9 @@ app.layout = dbc.Container([
             dbc.Row([dcc.Graph(id="s_actions")])
         ]),
         dbc.Col([
-            dbc.Row(dbc.Button("Download Data", id="download_button", outline=True, color="primary", size="lg", className="me-1")),
+            dbc.Row(dbc.Button("Download Graph Data", id="download_button", outline=True, color="primary", size="lg", className="me-1")),
             dcc.Download(id="download_data"),
+            html.Br(),
             dbc.Row(html.H3("Individual Analysis", style = {"textAlign": 'center'})),
             dbc.Row(dbc.Button('Run', outline=False, color="primary", className="me-1", id="individual_run")),
             html.Br(),
@@ -58,8 +59,10 @@ app.layout = dbc.Container([
             dbc.Row(html.H5("Group 2", style = {"textAlign": 'center','padding': 15})),
             dcc.Dropdown([], id="group 2", disabled=True, multi=True),
             html.Br(),
-            dbc.Row(dbc.Button('Run', outline=False, color="primary", className="me-1", disabled=True, id="group_run"))
-            
+            dbc.Row(dbc.Button('Run', outline=False, color="primary", className="me-1", disabled=True, id="group_run")),
+            html.Br(),
+            dbc.Row(dbc.Button("Download File Summary", id="summary_button", outline=True, color="primary", size="lg", className="me-1")),
+            dcc.Download(id="download_summary")
         ],width=2)
     ])
 
@@ -81,8 +84,8 @@ def update_output(list_of_contents, clear_press, filenames):
         content_type, content_string = list_of_contents.split(',')
         decoded = base64.b64decode(content_string)
         df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-        file_data[filenames[:12]]=f3b.filter_data(df)
-        file_names.append(filenames[:12])
+        file_data[filenames[:-4]]=df
+        file_names.append(filenames[:-4])
 
     if "clear_button" == ctx.triggered_id:
         file_data = {}
@@ -201,15 +204,15 @@ def update_time_range(end_date, start_date, group_check, file, group1, group2,):
             end_slice = c_df[c_dates == dt_end_date]
             end_time = pd.to_datetime(end_slice.iloc[:,0]).dt.time.iloc[-1]
             
-            print(dt_start_date, dt_end_date)
-            print(start_time, end_time)
+            #print(dt_start_date, dt_end_date)
+            #print(start_time, end_time)
             if dt_start_date == dt_end_date:
                 start_options = np.arange(int(str(start_time)[:2]),int(str(end_time)[:2])+1)
                 end_options = np.arange(int(str(start_time)[:2])+1, int(str(end_time)[:2])+2)
-                print(start_options, end_options)
+                #print(start_options, end_options)
             else:
                 start_options = np.arange(int(str(start_time)[:2]),24)
-                end_options = np.arange(0,int(str(end_time))+1)
+                end_options = np.arange(0,int(str(end_time)[:2])+1)
 
             first_option = str(start_options[0])
             last_option = str(end_options[-1])
@@ -279,7 +282,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
     start_datetime = datetime.datetime.strptime(start_date+" "+str(start_time), "%Y-%m-%d %H")
     end_datetime = datetime.datetime.strptime(end_date+" "+str(end_time), "%Y-%m-%d %H")
     if g_clicks and group_check == [' Group Analysis']:
-        print("Group click")
+        #print("Group click")
         figure_g = go.Figure()
         if (len(group1)>0) and (len(group2)>0):
             g1_slices = {}
@@ -346,7 +349,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
 
                 elif analysis_type == "Logistic wins":
                     g1_sidep_rew = {mouse: f3b.side_prewards(g1_slices[mouse]) for mouse in g1_slices}
-                    g1_preX = {mouse: f3b.create_X(g1_slices[mouse], g1_sidep_rew[mouse][0], g1_sidep_rew[mouse][1],5) for mouse in g1_slices}
+                    g1_preX = {mouse: f3b.create_X(g1_slices[mouse], g1_sidep_rew[mouse],5) for mouse in g1_slices}
                     g1_plogreg = {mouse: f3b.logit_regr(g1_preX[mouse]) for mouse in g1_sidep_rew}
                     g1_params = {mouse: g1_plogreg[mouse].params for mouse in g1_plogreg}
                     
@@ -355,7 +358,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                     g1_params_std = a_g1_params.std(axis=0)
 
                     g2_sidep_rew = {mouse: f3b.side_prewards(g2_slices[mouse]) for mouse in g2_slices}
-                    g2_preX = {mouse: f3b.create_X(g2_slices[mouse], g2_sidep_rew[mouse][0], g2_sidep_rew[mouse][1],5) for mouse in g2_slices}
+                    g2_preX = {mouse: f3b.create_X(g2_slices[mouse], g2_sidep_rew[mouse],5) for mouse in g2_slices}
                     g2_plogreg = {mouse: f3b.logit_regr(g2_preX[mouse]) for mouse in g2_sidep_rew}
                     g2_params = {mouse: g2_plogreg[mouse].params for mouse in g2_plogreg}
                     
@@ -375,7 +378,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
 
                 elif analysis_type == "Logistic losses":
                     g1_siden_rew = {mouse: f3b.side_nrewards(g1_slices[mouse]) for mouse in g1_slices}
-                    g1_npreX = {mouse: f3b.create_X(g1_slices[mouse], g1_siden_rew[mouse][0], g1_siden_rew[mouse][1],5) for mouse in g1_slices}
+                    g1_npreX = {mouse: f3b.create_X(g1_slices[mouse], g1_siden_rew[mouse], 5) for mouse in g1_slices}
                     g1_nlogreg = {mouse: f3b.logit_regr(g1_npreX[mouse]) for mouse in g1_siden_rew}
                     g1_nparams = {mouse: g1_nlogreg[mouse].params for mouse in g1_nlogreg}
                     
@@ -384,7 +387,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                     g1_nparams_std = a_g1_nparams.std(axis=0)
 
                     g2_siden_rew = {mouse: f3b.side_nrewards(g2_slices[mouse]) for mouse in g2_slices}
-                    g2_npreX = {mouse: f3b.create_X(g2_slices[mouse], g2_siden_rew[mouse][0], g2_siden_rew[mouse][1],5) for mouse in g2_slices}
+                    g2_npreX = {mouse: f3b.create_X(g2_slices[mouse], g2_siden_rew[mouse], 5) for mouse in g2_slices}
                     g2_nlogreg = {mouse: f3b.logit_regr(g2_npreX[mouse]) for mouse in g2_siden_rew}
                     g2_nparams = {mouse: g2_nlogreg[mouse].params for mouse in g2_nlogreg}
                     
@@ -401,6 +404,18 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
                     figure_g.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=g1_nparams_mean))
                     figure_g.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=g2_nparams_mean))
                     figure_g.update_layout(title = {'text': "Logistic wins", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", font = dict(size = 16), transition_duration=200)
+
+                elif analysis_type == "Accuracy":
+                    accuracy_g1 = {mouse: f3b.accuracy(g1_slices[mouse]) for mouse in g1_slices}
+                    accuracy_g2 = {mouse: f3b.accuracy(g2_slices[mouse]) for mouse in g2_slices}
+                    
+                    x_ws = [""]
+
+                    figure_g.add_trace(go.Box(x=[0]*len(list(accuracy_g1.keys())), y= list(accuracy_g1.values()), name="Group 1", width=0.4))
+                    figure_g.add_trace(go.Box(x=[0.6]*len(list(accuracy_g2.keys())), y= list(accuracy_g2.values()), name="Group 2", width=0.4))
+                    figure_g.update_layout(title = {'text': "Accuracy ", 'x': 0.5}, boxmode="group", yaxis_title = "Proportion", font = dict(size = 16), yaxis_range = [0,1],xaxis= dict(tickvals = [0,1], ticktext = ["", ""]), transition_duration=200)                    
+                    pass
+
 
         return figure_g
 
@@ -442,7 +457,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
             
             elif analysis_type == "Logistic wins":
                 c_sidep_rew = f3b.side_prewards(c_slice)
-                c_preX = f3b.create_X(c_slice, c_sidep_rew[0], c_sidep_rew[1],5)
+                c_preX = f3b.create_X(c_slice, c_sidep_rew, 5)
                 c_plogreg = f3b.logit_regr(c_preX)
                 c_pcoeffs = c_plogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_pcoeffs}))
@@ -454,7 +469,7 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
 
             elif analysis_type == "Logistic losses":
                 c_siden_rew = f3b.side_nrewards(c_slice)
-                c_npreX = f3b.create_X(c_slice, c_siden_rew[0], c_siden_rew[1],5)
+                c_npreX = f3b.create_X(c_slice, c_siden_rew, 5)
                 c_nlogreg = f3b.logit_regr(c_npreX)
                 c_ncoeffs = c_nlogreg.params
                 c_analysis.append(pd.DataFrame({"Trial in past": np.flip(np.arange(-5,0)), "Regr. Coeffs.": c_ncoeffs}))
@@ -463,6 +478,12 @@ def update_graph(i_clicks, g_clicks, analysis_type, start_date, end_date, start_
 
                 figure_i.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_ncoeffs))
                 figure_i.update_layout(title = {'text': "Logistic losses", 'x': 0.5}, xaxis={"title": "Trial in past", "tickvals": np.flip(np.arange(-5,0))}, yaxis_title = "Regr. Coeff", yaxis_range=[y_min-0.5,y_max+0.5], font = dict(size = 16), transition_duration=200)
+
+            elif analysis_type == "Accuracy":
+                c_accuracy = f3b.accuracy(c_slice)
+                figure_i.add_trace(go.Bar(x=[0], y= [c_accuracy], width=0.4))
+                figure_i.update_layout(title = {'text': "Accuracy ", 'x': 0.5}, yaxis_title = "Accuracy", font = dict(size = 16), yaxis_range = [0,1],
+                xaxis= dict(tickvals = [0], ticktext = [""]), transition_duration=200)
 
         return figure_i
 
@@ -483,6 +504,52 @@ def func(n_clicks, filename, analysis_type):
         print("Detecting none")
         return None
 
+@app.callback(
+    Output("download_summary", "data"),
+    Input("summary_button", "n_clicks"),
+    State("my_files", "value"),
+    prevent_initial_call=True
+)
+
+def summary(n_clicks, file):
+    c_df = file_data[file]
+    print("Here")
+    c_summary = {
+        "Accuracy": [f3b.accuracy(c_df)],
+        "Win-Stay": [f3b.win_stay(c_df)],
+        "Lose-Shift": [f3b.lose_shift(c_df)],
+        "Reg Wins AUC": [0],
+        "Reg Losses AUC": [0],
+        "Pellets": [f3b.count_pellets(c_df)],
+        "Left Pokes": [f3b.count_left_pokes(c_df)],
+        "Right Pokes": [f3b.count_right_pokes(c_df)],
+        "Total Pokes": [f3b.count_pokes(c_df)],
+        "Iti after win": f3b.iti_after_win(c_df).median(),
+        "Vigor": [0]
+    }
+
+    c_pside = f3b.side_prewards(c_df)
+    c_preX = f3b.create_X(c_df, c_pside, 5)
+    c_preg = f3b.logit_regr(c_preX)
+    c_preg_auc = np.sum(c_preg.params)
+    c_summary["Reg Wins AUC"] = [c_preg_auc]
+
+    c_nside = f3b.side_nrewards(c_df)
+    c_npreX = f3b.create_X(c_df, c_nside, 5)
+    c_nreg = f3b.logit_regr(c_npreX)
+    c_nreg_auc = np.sum(c_nreg.params)
+    c_summary["Reg Losses AUC"] = [c_nreg_auc]
+
+    c_poke_times = f3b.filter_data(c_df)["Poke_Time"]
+    c_summary["Vigor"] = [c_poke_times.mean()]
+
+    print(c_summary)
+    c_summary_df = pd.DataFrame(c_summary)
+    c_summary_df.index = [file]
+    print(c_summary_df)
+    outname = f"{file}_summary.csv"
+
+    return dcc.send_data_frame(c_summary_df.to_csv, outname)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
