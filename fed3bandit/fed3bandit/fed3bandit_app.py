@@ -137,7 +137,7 @@ def update_time_range(end_date, start_date, file):
             #print(start_options, end_options)
         else:
             start_options = np.arange(int(str(start_time)[:2]),24)
-            end_options = np.arange(0,int(str(end_time)[:2])+1)
+            end_options = np.arange(0,int(str(end_time)[:2])+2)
 
         first_option = str(start_options[0])
         last_option = str(end_options[-1])
@@ -187,7 +187,7 @@ def update_graph(i_clicks, analysis_type, start_date, end_date, start_time, end_
                 )
                 
                 cb_actions = f3b.binned_paction(c_slice, 5)
-                c_prob = f3b.filter_data(c_slice)["Prob_left"].iloc[5:] / 100
+                c_prob = f3b.true_probs(c_slice)[0]
                 c_trials = np.arange(len(cb_actions)) 
                 c_analysis.append(pd.DataFrame({"Trial": c_trials, "True P(left)": c_prob, "Mouse P(left)": cb_actions}))
 
@@ -290,7 +290,9 @@ def summary(n_clicks, file):
         "Right Pokes": [f3b.count_right_pokes(c_df)],
         "Total Pokes": [f3b.count_pokes(c_df)],
         "Iti after win": f3b.iti_after_win(c_df).median(),
-        "Vigor": [0]
+        "Iti after loss": np.median(f3b.iti_after_loss(c_df)),
+        "Timeout pokes": [f3b.count_invalid_pokes(c_df, reason=["timeout"])],
+        "Vigor": [f3b.filter_data(c_df)["Poke_Time"].mean()]
     }
 
     c_pside = f3b.side_prewards(c_df)
@@ -305,7 +307,7 @@ def summary(n_clicks, file):
     c_nreg_auc = np.sum(c_nreg.params)
     c_summary["Reg Losses AUC"] = [c_nreg_auc]
 
-    c_poke_times = f3b.filter_data(c_df)["Poke_Time"]
+    c_poke_times = f3b.filter_data(c_df)["Poke_Time"].mean()
     c_summary["Vigor"] = [c_poke_times.mean()]
 
     print(c_summary)
