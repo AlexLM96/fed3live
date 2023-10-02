@@ -44,7 +44,7 @@ To test the installation, open a new python file, and execute the following code
       sample_data = f3b.load_sampledata()
 
       #Get the true left reward probability as well as the mouse estimation
-      true_left = f3b.left_probs(sample_data, offset=5)
+      true_left = f3b.true_probs(sample_data, offset=5)[0]
       mouse_left = f3b.binned_paction(sample_data, window=5)
 
       #Plotting

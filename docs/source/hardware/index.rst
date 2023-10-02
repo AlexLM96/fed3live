@@ -1,5 +1,5 @@
 
-Task Overview and Hardware
+Hardware
 ===============================
 
 .. toctree::
