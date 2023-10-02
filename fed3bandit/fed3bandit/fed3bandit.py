@@ -53,7 +53,7 @@ def filter_data(data_choices, skip=[]):
     
     filtered_data.iloc[:,0] = pd.to_datetime(filtered_data.iloc[:,0])
     
-    return filtered_data
+    return filtered_data.reset_index(drop=True)
 
 def binned_paction(data_choices, window=5):
     """Bins actions from fed3 bandit file
@@ -228,16 +228,16 @@ def count_invalid_pokes(data_choices, reason=["all"]):
     count = 0
     for r in reason:
         if r == "timeout":
-            f_data_choices = data_choices[np.logical_or(data_choices["event"] == "LeftinTimeOut",
-                                                        data_choices["event"] == "RightinTimeout")]
+            f_data_choices = data_choices[np.logical_or(data_choices["Event"] == "LeftinTimeOut",
+                                                        data_choices["Event"] == "RightinTimeout")]
             count += f_data_choices.shape[0]
         elif r == "pellet":
-            f_data_choices = data_choices[np.logical_or(data_choices["event"] == "LeftWithPellet",
-                                                        data_choices["event"] == "RightWithPellet")]
+            f_data_choices = data_choices[np.logical_or(data_choices["Event"] == "LeftWithPellet",
+                                                        data_choices["Event"] == "RightWithPellet")]
             count += f_data_choices.shape[0]
         elif r == "dispense":
-            f_data_choices = data_choices[np.logical_or(data_choices["event"] == "RightDuringDispense",
-                                                        data_choices["event"] == "LeftDuringDispense")]
+            f_data_choices = data_choices[np.logical_or(data_choices["Event"] == "RightDuringDispense",
+                                                        data_choices["Event"] == "LeftDuringDispense")]
             count += f_data_choices.shape[0]
         elif r == "short":
             f_data_choices = data_choices[np.logical_or(data_choices["event"] == "LeftShort",
@@ -328,8 +328,6 @@ def iti_after_win(data_choices):
     pellet_ts = f_data_choices.iloc[pellet_idx, 0].reset_index(drop=True)
     n_pellet_ts = f_data_choices.iloc[n_pellet_idx, 0].reset_index(drop=True)
     
-    print("New iter")
-    print(f_data_choices["Event"].unique())
 
     min_rows = np.min([pellet_ts.shape[0], n_pellet_ts.shape[0]])
 
@@ -378,8 +376,8 @@ def iti_after_loss(data_choices):
     
     iti_after_loss = []
     for idx in last_loss_idx:
-        c_ts = f_file.iloc[idx,0]
-        next_ts = f_file.iloc[idx+1,0]
+        c_ts = f_data_choices.iloc[idx,0]
+        next_ts = f_data_choices.iloc[idx+1,0]
         
         delta_ts = (next_ts - c_ts).total_seconds()
         iti_after_loss.append(delta_ts)
@@ -418,7 +416,7 @@ def reversal_peh(data_choices, min_max, return_avg = False, alt_right = "Device_
 
     event = f_data_choices["Event"]
     switches = np.where(np.diff(prob_right) != 0)[0] + 1
-    switches = switches[np.logical_and(switches+min_max[0] > 0, switches+min_max[1] < data_choices.shape[0])]
+    switches = switches[np.logical_and(switches+min_max[0] > 0, switches+min_max[1] < f_data_choices.shape[0])]
 
     all_trials = []
     for switch in switches:
