@@ -48,8 +48,6 @@ def filter_data(data_choices, skip=[]):
             event_types.remove(event_type)
 
     filtered_data = copy.deepcopy(data_choices)
-    
-
     for event_type in event_types:
         filtered_data = filtered_data[filtered_data["Event"] != event_type]
     
@@ -206,6 +204,48 @@ def count_pokes(data_choices):
 
     return all_pokes
 
+def count_invalid_pokes(data_choices, reason=["all"]):
+    """Counts the number of invalid pokes.
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+
+    reason : list of str
+        List with conditions of why pokes were invalid. Options are: "timeout",
+        "pellet", "dispense", "short". See notes for full explanation.
+
+    Returns
+    --------
+    count : int
+       Number of invalid pokes 
+    """
+    events = ["timeout", "pellet", "dispense", "short"]
+    if reason == ["all"]:
+        reason = events
+
+    count = 0
+    for r in reason:
+        if r == "timeout":
+            f_data_choices = data_choices[np.logical_or(data_choices["event"] == "LeftinTimeOut",
+                                                        data_choices["event"] == "RightinTimeout")]
+            count += f_data_choices.shape[0]
+        elif r == "pellet":
+            f_data_choices = data_choices[np.logical_or(data_choices["event"] == "LeftWithPellet",
+                                                        data_choices["event"] == "RightWithPellet")]
+            count += f_data_choices.shape[0]
+        elif r == "dispense":
+            f_data_choices = data_choices[np.logical_or(data_choices["event"] == "RightDuringDispense",
+                                                        data_choices["event"] == "LeftDuringDispense")]
+            count += f_data_choices.shape[0]
+        elif r == "short":
+            f_data_choices = data_choices[np.logical_or(data_choices["event"] == "LeftShort",
+                                                        data_choices["event"] == "RightShort")]
+            count += f_data_choices.shape[0]            
+    
+        return count
+
 def pokes_per_pellet(data_choices):
     """Calculates pokes per pellets from fed3 bandit file
     
@@ -300,6 +340,51 @@ def iti_after_win(data_choices):
 
     return iti_win
 
+def iti_after_loss(data_choices):
+    """Calculates latency to next poke after the end of a time out
+
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+
+    Returns
+    --------
+    iti_loss : pandas.Series
+        Latency to next poke after the end of a time out 
+    """
+    f_data_choices = filter_data(data_choices, skip=["LeftinTimeOut", "RightinTimeout", "Pellet"])
+    
+    side_idx = np.where(np.logical_or(f_data_choices["Event"] == "Left", 
+                                      f_data_choices["Event"] == "Right"))[0]
+    to_poke_idx = np.where(np.logical_or(f_data_choices["Event"] == "LeftinTimeOut", 
+                                         f_data_choices["Event"] == "RightinTimeout"))[0]
+    
+    loss_idx = []
+    for idx in side_idx[:-1]:
+        next_event = f_data_choices["Event"].iloc[idx+1]
+        if np.logical_and.reduce((next_event != "Pellet", next_event != "LeftinTimeOut", 
+                                 next_event != "RightinTimeout")):
+            loss_idx.append(idx)
+            
+    last_to_idx = []
+    for idx in to_poke_idx:
+        if np.logical_and(f_data_choices["Event"].iloc[idx+1] != "LeftinTimeout",
+                         f_data_choices["Event"].iloc[idx+1] != "RightinTimeout"):
+            last_to_idx.append(idx)
+
+    last_loss_idx = loss_idx + last_to_idx
+    last_loss_idx.sort()
+    
+    iti_after_loss = []
+    for idx in last_loss_idx:
+        c_ts = f_file.iloc[idx,0]
+        next_ts = f_file.iloc[idx+1,0]
+        
+        delta_ts = (next_ts - c_ts).total_seconds()
+        iti_after_loss.append(delta_ts)
+    
+    return iti_after_loss
 
 def reversal_peh(data_choices, min_max, return_avg = False, alt_right = "Device_Number"):
     """Calculates the probability of poking in the high probability port around contingency switches
@@ -600,3 +685,5 @@ def logit_regr(X_df):
     
     return c_regr
 
+
+# %%
