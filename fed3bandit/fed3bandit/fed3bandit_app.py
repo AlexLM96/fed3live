@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, Input, Output, State, ctx
+from dash import Dash, dcc, html, Input, Output, State, ctx, dash_table
 from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
 import datetime
@@ -15,24 +15,26 @@ import io
 file_names = []
 file_data = {}
 data_analyses = ["Overview", "Performance"]
-c_analysis = []
 
 #%%
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.layout = dbc.Container([
+    dbc.Row(dbc.Navbar(children=[
+        dbc.Col(html.H4("Home",  style = {"textAlign": 'center'})),
+        dbc.Col(html.H4("Group Analysis",  style = {"textAlign": 'center'})),
+        dbc.Col(html.H4("Circadian Analysis",  style = {"textAlign": 'center'}))
+    ], color="light")),
     dbc.Row(html.H1("FED3Bandit Analyis", style = {"textAlign": 'center'})),
     dbc.Row([
         dbc.Col([
             dbc.Row(dcc.Upload(children=dbc.Button('Upload File', outline=True, color="primary", size="lg", className="me-1"), multiple=False, id="upload_csv")),
             dbc.Row([
-                dbc.Col(html.H4("Files", style = {"textAlign": 'center','padding': 10})),
+                dbc.Col(html.H4("Files", style = {"textAlign": 'left','padding': 5})),
                 dbc.Col(dbc.Button('Clear', id="clear_button", outline=True, color="link", size="sm", className="me-1", style ={'padding': 10}))
             ]),
             dcc.Dropdown(id="my_files", options = file_names),
-            dbc.Row(html.H4("Analysis", style = {"textAlign": 'center','padding': 10})),
-            dcc.Dropdown(id="analyses", options = data_analyses),
             html.Br(),
             dbc.Row(dbc.Button('Run', outline=False, color="primary", className="me-1", id="individual_run")),
             html.Br(),
@@ -40,19 +42,22 @@ app.layout = dbc.Container([
             dcc.Download(id="download_summary")
         ],width=2),
         dbc.Col([
-            dbc.Row([dcc.Graph(id="s_actions")])
-        ]),
+            dbc.Row(html.H4("Overview", style = {"textAlign": 'center'})),
+            dbc.Row([dcc.Graph(id="s_actions", figure={"layout": go.Layout(margin={"t": 0})})])
+        ], width=6),
         dbc.Col([
-            dbc.Row(html.H4("Date Selection", style = {"textAlign": 'center','padding': 10})),
-            dcc.DatePickerRange(id="date_range", start_date=datetime.datetime.today(), end_date=datetime.datetime.today(), disabled=True),
-            dbc.Row(html.H4("Time Selection", style = {"textAlign": 'center','padding': 10})),
-            dbc.Row(html.H5("From:",style = {"textAlign": 'center','padding': 5})),
+            html.H4("Summary", style = {"textAlign": 'center'}),
+            dbc.Row([dash_table.DataTable([{"BLANK": "TABLE"}], id="summary_table")])
+        ], width=2),
+        dbc.Col([
+            dbc.Row(html.H4("Start date: ", style = {"textAlign": 'left','padding': 10})),
+            dcc.DatePickerSingle(id="start_date", date=datetime.datetime.today(), disabled=True),
+            dbc.Row(html.H4("Start time: ", style = {"textAlign": 'left','padding': 10})),
             dcc.Dropdown(id="start_time", disabled=True),
-            dbc.Row(html.H5("To:",style = {"textAlign": 'center','padding': 5})),
-            dcc.Dropdown(id="end_time", disabled=True),
+            dbc.Row(html.H4("Hours: ",style = {"textAlign": 'left','padding': 10})),
+            dcc.Dropdown(id="analysis_hours", disabled=True),
         ],width=2)
     ])
-
 ])
 
 @app.callback(
@@ -80,234 +85,238 @@ def update_output(list_of_contents, clear_press, filenames):
         
     return file_names
 
-
 @app.callback(
-        Output("date_range", "start_date"),
-        Output("date_range", "end_date"),
-        Output("date_range", "min_date_allowed"),
-        Output("date_range", "max_date_allowed"),
-        Output("date_range", "disabled"),
+        Output("start_date", "date"),
+        Output("start_date", "min_date_allowed"),
+        Output("start_date", "max_date_allowed"),
+        Output("start_date", "disabled"),
         Input("my_files", "value"),
         prevent_initial_call=True
 )
-def update_date_range(file):
+def update_dates(file):
     if file != None:
         c_df = file_data[file]
         c_dates = pd.to_datetime(c_df.iloc[:,0]).dt.date
         start_date = c_dates.iloc[0]
         end_date = c_dates.iloc[-1]
 
-        return start_date, end_date, start_date, end_date, False
+        return start_date, start_date, end_date, False
     else:
         start_date = datetime.datetime.today()
         end_date = datetime.datetime.today()
 
-        return start_date, end_date, start_date, end_date, True
+        return start_date, start_date, end_date, True
     
 @app.callback(
-        Output("start_time", "options"),
-        Output("end_time", "options"),
         Output("start_time", "disabled"),
-        Output("end_time", "disabled"),
+        Output("start_time", "options"),
         Output("start_time", "value"),
-        Output("end_time", "value"),
-        Input("date_range", "end_date"),
-        Input("date_range", "start_date"),
-        State("my_files", "value"),
+        Output("analysis_hours", "disabled"),
+        Output("analysis_hours", "options"),
+        Output("analysis_hours", "value"),
+        Input("my_files", "value"),
+        Input("start_date", "date"),
         prevent_initial_call=True
 )
-def update_time_range(end_date, start_date, file):
+def update_time(file, start_date):
     if file != None:
-        dt_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
-        dt_end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+        c_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
         
         c_df = file_data[file]
-        c_dates = pd.to_datetime(c_df.iloc[:,0]).dt.date
+        c_datetimes = pd.to_datetime(c_df.iloc[:,0])
+        c_start_datetimes = c_datetimes[c_datetimes.dt.date == c_start_date]
 
-        start_slice = c_df[c_dates == dt_start_date]
-        start_time = pd.to_datetime(start_slice.iloc[:,0]).dt.time.iloc[0]
-        end_slice = c_df[c_dates == dt_end_date]
-        end_time = pd.to_datetime(end_slice.iloc[:,0]).dt.time.iloc[-1]
-        
-        #print(dt_start_date, dt_end_date)
-        #print(start_time, end_time)
-        if dt_start_date == dt_end_date:
-            start_options = np.arange(int(str(start_time)[:2]),int(str(end_time)[:2])+1)
-            end_options = np.arange(int(str(start_time)[:2])+1, int(str(end_time)[:2])+2)
-            #print(start_options, end_options)
-        else:
-            start_options = np.arange(int(str(start_time)[:2]),24)
-            end_options = np.arange(0,int(str(end_time)[:2])+2)
+        first_event_time = c_start_datetimes.dt.time.iloc[0]
+        first_event_str = str(first_event_time)[:2]
 
-        first_option = str(start_options[0])
-        last_option = str(end_options[-1])
+        times = [str(i) for i in range(int(first_event_str), 24)]
+        hours = [str(i+1) for i in range(100)]
+        return False, times, first_event_str, False, hours, "6"
 
-
-        return list(start_options), list(end_options), False, False, first_option, last_option
-    
     else:
-        return [0],[0], True, True, 0, 0
-        
+        return True, [0], 0, True, [0], 0
+
 
 @app.callback(
         Output("s_actions", "figure"),
         Input("individual_run", "n_clicks"),
-        State("analyses", "value"),
-        State("date_range", "start_date"),
-        State("date_range", "end_date"),
+        State("start_date", "date"),
         State("start_time", "value"),
-        State("end_time", "value"),
+        State("analysis_hours", "value"),
         State("my_files", "value"),
         prevent_initial_call = True
 )
-def update_graph(i_clicks, analysis_type, start_date, end_date, start_time, end_time, file):
-    global c_analysis
+def update_graph(i_clicks, start_date, start_time, hours, file):
     
+    c_df = file_data[file]
+    c_df.iloc[:,0] = pd.to_datetime(c_df.iloc[:,0])
     start_datetime = datetime.datetime.strptime(start_date+" "+str(start_time), "%Y-%m-%d %H")
-    end_datetime = datetime.datetime.strptime(end_date+" "+str(end_time), "%Y-%m-%d %H")
+    end_datetime = start_datetime + datetime.timedelta(hours=int(hours))
 
-    if i_clicks:
-        figure_i = go.Figure()
-        if file != None:
-            c_df = file_data[file]
-            c_df.iloc[:,0] = pd.to_datetime(c_df.iloc[:,0])
-
-            c_slice = c_df[np.logical_and(c_df.iloc[:,0] >= start_datetime, c_df.iloc[:,0] <= end_datetime)]
-
-        if analysis_type != None:
-            if analysis_type == "Overview":
-                figure_i = make_subplots(
-                    rows=2, cols=3,
-                    specs=[
-                        [{"colspan":3},None, None],
-                        [{}, {"colspan":2}, None]
-                    ],
-                    subplot_titles=("Overview", "Pellets", "Pokes"),
-                    horizontal_spacing=0.15
-                )
-                
-                cb_actions = f3b.binned_paction(c_slice, 5)
-                c_prob = f3b.true_probs(c_slice)[0]
-                c_trials = np.arange(len(cb_actions)) 
-                c_analysis.append(pd.DataFrame({"Trial": c_trials, "True P(left)": c_prob, "Mouse P(left)": cb_actions}))
-
-                figure_i.add_trace(go.Scatter(x=c_trials, y = cb_actions, showlegend=False),row=1,col=1)
-                figure_i.add_trace(go.Scatter(x=c_trials, y = c_prob, showlegend=False),row=1,col=1)
-                figure_i.update_xaxes(title_text="Trial", row=1, col=1)
-                figure_i.update_yaxes(title_text="P(left)", row=1, col=1)
-
-                c_pellets = f3b.count_pellets(c_slice)
-                figure_i.add_trace(go.Bar(x=[0], y=[c_pellets]), row=2, col=1)
-                figure_i.update_xaxes(tickvals=[0], ticktext=[""], row=2, col=1)
-                figure_i.update_yaxes(title_text="Pellets", row=2, col=1)
-
-                c_all_pokes = f3b.count_pokes(c_slice)
-                c_left_pokes = f3b.count_left_pokes(c_slice)
-                c_right_pokes = f3b.count_right_pokes(c_slice)
-
-                figure_i.add_trace(go.Bar(x=[0,1,2], y=[c_all_pokes, c_left_pokes, c_right_pokes]), row=2, col=2)
-                figure_i.update_xaxes(tickvals=[0,1,2], ticktext=["All", "Left", "Right"], row=2, col=2)
-                figure_i.update_yaxes(title_text="Pokes", row=2, col=2)
-
-                figure_i.update_layout(showlegend=False, height=600)
+    figure_i = go.Figure()
+    if file != None:
+        c_slice = c_df[np.logical_and(c_df.iloc[:,0] >= start_datetime, c_df.iloc[:,0] <= end_datetime)]
+    
+        figure_i = make_subplots(
+            rows=3, cols=3,
+            specs=[
+                [{"colspan":3},None, None],
+                [{"colspan":2}, None, {"colspan":1}],
+                [{"colspan":2}, None, {"colspan":1}]
+            ],
+            #subplot_titles=("Overview", "Pellets", "Pokes"),
+            horizontal_spacing=0.15
+        )
             
-            elif analysis_type == "Performance":
-                figure_i = make_subplots(
-                    rows=2, cols=4,
-                    specs=[
-                        [{"colspan":2}, None, {}, {}],
-                        [{}, {"colspan":2}, None, {}]
-                    ],
-                    #subplot_titles=("Reversal PEH", "PPP", "Accuracy"),
-                    horizontal_spacing=0.125
-                )
-                
-                c_rev_peh = f3b.reversal_peh(c_slice, (-10,11)).mean(axis=0)
-                figure_i.add_trace(go.Scatter(x=np.arange(-10,11),y=c_rev_peh, mode='lines'), row=1, col=1)
-                figure_i.update_xaxes(title_text="Trial from reversal", tickvals=np.arange(-10,11,5), row=1, col=1)
-                figure_i.update_yaxes(title_text="P(High)", row=1, col=1)
+        cb_actions = f3b.binned_paction(c_slice, 5)
+        c_prob = f3b.true_probs(c_slice)[0]
+        c_trials = np.arange(len(cb_actions)) 
 
-                c_ppp = f3b.pokes_per_pellet(c_slice)
-                figure_i.add_trace(go.Bar(x=[0], y=[c_ppp]), row=1, col=3)
-                figure_i.update_xaxes(tickvals=[0], ticktext=[""], row=1, col=3)
-                figure_i.update_yaxes(title_text="Pokes/Pellet", row=1, col=3)
+        figure_i.add_trace(go.Scatter(x=c_trials, y = cb_actions, showlegend=False),row=1,col=1)
+        figure_i.add_trace(go.Scatter(x=c_trials, y = c_prob, showlegend=False),row=1,col=1)
+        figure_i.update_xaxes(title_text="Trial", row=1, col=1)
+        figure_i.update_yaxes(title_text="P(left)", row=1, col=1)
 
-                c_accuracy = f3b.accuracy(c_slice)
-                figure_i.add_trace(go.Bar(x=[0], y=[c_accuracy]), row=1, col=4)
-                figure_i.update_xaxes(tickvals=[0], ticktext=[""], row=1, col=4)
-                figure_i.update_yaxes(title_text="Accuracy", row=1, col=4)
-                
-                c_ws = f3b.win_stay(c_slice)
-                c_ls = f3b.lose_shift(c_slice)
-                figure_i.add_trace(go.Bar(x=[0,1], y= [c_ws, c_ls]), row=2, col=1)
-                figure_i.update_xaxes(tickvals=[0,1], ticktext=["Win-Stay", "Lose-Shift"], row=2, col=1)
-                figure_i.update_yaxes(title_text="Proportion", row=2, col=1)
+        try:
+            c_rev_peh = f3b.reversal_peh(c_slice, (-10,11)).mean(axis=0)
+            figure_i.add_trace(go.Scatter(x=np.arange(-10,11),y=c_rev_peh, mode='lines'), row=2, col=1)
+            figure_i.update_xaxes(title_text="Trial from reversal", tickvals=np.arange(-10,11,5), row=2, col=1)
+            figure_i.update_yaxes(title_text="P(High)", row=2, col=1)
+        except:
+            figure_i.add_annotation(text="Not Enough Data", x=0, y=0.5, row=2, col=1)
 
-                c_psides = f3b.side_prewards(c_slice)
-                c_pX = f3b.create_X(c_slice, c_psides, 5)
-                c_plogreg = f3b.logit_regr(c_pX)
-                c_pcoeffs = c_plogreg.params
-                c_pauc = c_pcoeffs.sum()
+        c_ws = f3b.win_stay(c_slice)
+        c_ls = f3b.lose_shift(c_slice)
+        figure_i.add_trace(go.Bar(x=[0,1], y= [c_ws, c_ls]), row=2, col=3)
+        figure_i.update_xaxes(tickvals=[0,1], ticktext=["Win-Stay", "Lose-Shift"], row=2, col=3)
+        figure_i.update_yaxes(title_text="Proportion", row=2, col=3, range=[0,1])
 
-                c_nsides = f3b.side_nrewards(c_slice)
-                c_nX = f3b.create_X(c_slice, c_nsides, 5)
-                c_nlogreg = f3b.logit_regr(c_nX)
-                c_ncoeffs = c_nlogreg.params
-                c_nauc = c_ncoeffs.sum()
+        try:
+            c_psides = f3b.side_prewards(c_slice)
+            c_pX = f3b.create_X(c_slice, c_psides, 5)
+            c_plogreg = f3b.logit_regr(c_pX)
+            c_pcoeffs = c_plogreg.params
+            c_pauc = c_pcoeffs.sum()
 
-                figure_i.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_pcoeffs), row=2, col=2)
-                figure_i.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_ncoeffs), row=2, col=2)
-                figure_i.update_xaxes(title_text="Trial in past", tickvals=np.arange(-5,0), row=2, col=2)
-                figure_i.update_yaxes(title_text="Regr. Coeff.", row=2, col=2)
-                
-                figure_i.add_trace(go.Bar(x=[0,1], y=[c_pauc, c_nauc]), row=2, col=4)
-                figure_i.update_xaxes(tickvals=[0,1], ticktext=["Wins", "Losses"], row=2, col=4)
-                figure_i.update_yaxes(title_text="AUC", row=2, col=4)
+            c_nsides = f3b.side_nrewards(c_slice)
+            c_nX = f3b.create_X(c_slice, c_nsides, 5)
+            c_nlogreg = f3b.logit_regr(c_nX)
+            c_ncoeffs = c_nlogreg.params
+            c_nauc = c_ncoeffs.sum()
 
-                figure_i.update_layout(showlegend=False, height=600)
+            figure_i.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_pcoeffs), row=3, col=1)
+            figure_i.add_trace(go.Scatter(x=np.flip(np.arange(-5,0)),y=c_ncoeffs), row=3, col=1)
+            figure_i.update_xaxes(title_text="Trial in past", tickvals=np.arange(-5,0), row=3, col=1)
+            figure_i.update_yaxes(title_text="Regr. Coeff.", row=3, col=1)
+            
+            figure_i.add_trace(go.Bar(x=[0,1], y=[c_pauc, c_nauc]), row=3, col=3)
+            figure_i.update_xaxes(tickvals=[0,1], ticktext=["Wins", "Losses"], row=3, col=3)
+            figure_i.update_yaxes(title_text="AUC", row=3, col=3)
+        
+        except:
+            figure_i.add_annotation(text="Not Enough Data", x=0, y=0.5, row=3, col=1)
+            figure_i.add_annotation(text="Not Enough Data", x=0, y=0.5, row=3, col=3)
 
-        return figure_i
+        figure_i.update_layout(showlegend=False, height=600, margin={"t": 10})
+            
+    return figure_i
+
+@app.callback(
+    Output("summary_table", "data"),
+    Input("individual_run", "n_clicks"),
+    State("start_date", "date"),
+    State("start_time", "value"),
+    State("analysis_hours", "value"),
+    State("my_files", "value"),
+    prevent_initial_call = True
+)
+
+def update_table(i_clicks, start_date, start_time, hours, file):
+    
+    c_df = file_data[file]
+    start_datetime = datetime.datetime.strptime(start_date+" "+str(start_time), "%Y-%m-%d %H")
+    end_datetime = start_datetime + datetime.timedelta(hours=int(hours))
+    c_slice = c_df[np.logical_and(c_df.iloc[:,0] >= start_datetime, c_df.iloc[:,0] <= end_datetime)]
+
+    c_pellets = f3b.count_pellets(c_slice)
+    c_all_pokes = f3b.count_pokes(c_slice)
+    c_left_pokes = f3b.count_left_pokes(c_slice)
+    c_right_pokes = f3b.count_right_pokes(c_slice)
+    c_invalid_pokes = f3b.count_invalid_pokes(c_slice)
+    
+    c_accuracy = f3b.accuracy(c_slice)
+    c_ppp = f3b.pokes_per_pellet(c_slice)
+    c_ws = f3b.win_stay(c_slice)
+    c_ls = f3b.lose_shift(c_slice)
+
+    c_table = [
+        {"Metric": "Total Pokes", "Value": c_all_pokes},
+        {"Metric": "Left Pokes", "Value": c_left_pokes},
+        {"Metric": "Right Pokes", "Value": c_right_pokes},
+        {"Metric": "Invalid Pokes", "Value": c_invalid_pokes},
+        {"Metric": "Pellets", "Value": c_pellets},
+        {"Metric": "Accuracy", "Value": round(c_accuracy, 2)},
+        {"Metric": "Pokes/Pellet", "Value": round(c_ppp, 2)},
+        {"Metric": "Win-Stay", "Value": round(c_ws, 2)},
+        {"Metric": "Lose-Shift", "Value": round(c_ls, 2)}
+        ]
+
+    return c_table
 
 
 @app.callback(
     Output("download_summary", "data"),
     Input("summary_button", "n_clicks"),
     State("my_files", "value"),
+    State("start_date", "date"),
+    State("start_time", "value"),
+    State("analysis_hours", "value"),
     prevent_initial_call=True
 )
 
-def summary(n_clicks, file):
+def summary(n_clicks, file, start_date, start_time, hours):
     c_df = file_data[file]
-    print("Here")
+    c_df.iloc[:,0] = pd.to_datetime(c_df.iloc[:,0])
+    start_datetime = datetime.datetime.strptime(start_date+" "+str(start_time), "%Y-%m-%d %H")
+    end_datetime = start_datetime + datetime.timedelta(hours=int(hours))
+
+    c_slice = c_df[np.logical_and(c_df.iloc[:,0] >= start_datetime, c_df.iloc[:,0] <= end_datetime)]
+
     c_summary = {
-        "Accuracy": [f3b.accuracy(c_df)],
-        "Win-Stay": [f3b.win_stay(c_df)],
-        "Lose-Shift": [f3b.lose_shift(c_df)],
+        "Accuracy": [f3b.accuracy(c_slice)],
+        "Win-Stay": [f3b.win_stay(c_slice)],
+        "Lose-Shift": [f3b.lose_shift(c_slice)],
         "Reg Wins AUC": [0],
         "Reg Losses AUC": [0],
-        "Pellets": [f3b.count_pellets(c_df)],
-        "Left Pokes": [f3b.count_left_pokes(c_df)],
-        "Right Pokes": [f3b.count_right_pokes(c_df)],
-        "Total Pokes": [f3b.count_pokes(c_df)],
-        "Iti after win": f3b.iti_after_win(c_df).median(),
-        "Iti after loss": np.median(f3b.iti_after_loss(c_df)),
-        "Timeout pokes": [f3b.count_invalid_pokes(c_df, reason=["timeout"])],
-        "Vigor": [f3b.filter_data(c_df)["Poke_Time"].mean()]
+        "Pellets": [f3b.count_pellets(c_slice)],
+        "Left Pokes": [f3b.count_left_pokes(c_slice)],
+        "Right Pokes": [f3b.count_right_pokes(c_slice)],
+        "Total Pokes": [f3b.count_pokes(c_slice)],
+        "Iti after win": f3b.iti_after_win(c_slice).median(),
+        "Iti after loss": np.median(f3b.iti_after_loss(c_slice)),
+        "Timeout pokes": [f3b.count_invalid_pokes(c_slice, reason=["timeout"])],
+        "Vigor": [f3b.filter_data(c_slice)["Poke_Time"].mean()]
     }
 
-    c_pside = f3b.side_prewards(c_df)
-    c_preX = f3b.create_X(c_df, c_pside, 5)
-    c_preg = f3b.logit_regr(c_preX)
-    c_preg_auc = np.sum(c_preg.params)
-    c_summary["Reg Wins AUC"] = [c_preg_auc]
+    try:
+        c_pside = f3b.side_prewards(c_slice)
+        c_preX = f3b.create_X(c_slice, c_pside, 5)
+        c_preg = f3b.logit_regr(c_preX)
+        c_preg_auc = np.sum(c_preg.params)
+        c_summary["Reg Wins AUC"] = [c_preg_auc]
+    except:
+        c_summary["Reg Wins AUC"] = ["Not enough data"]
 
-    c_nside = f3b.side_nrewards(c_df)
-    c_npreX = f3b.create_X(c_df, c_nside, 5)
-    c_nreg = f3b.logit_regr(c_npreX)
-    c_nreg_auc = np.sum(c_nreg.params)
-    c_summary["Reg Losses AUC"] = [c_nreg_auc]
+    try:
+        c_nside = f3b.side_nrewards(c_slice)
+        c_npreX = f3b.create_X(c_slice, c_nside, 5)
+        c_nreg = f3b.logit_regr(c_npreX)
+        c_nreg_auc = np.sum(c_nreg.params)
+        c_summary["Reg Losses AUC"] = [c_nreg_auc]
+    except:
+        c_summary["Reg Losses AUC"] = ["Not enough data"]
 
-    c_poke_times = f3b.filter_data(c_df)["Poke_Time"].mean()
+    c_poke_times = f3b.filter_data(c_slice)["Poke_Time"].mean()
     c_summary["Vigor"] = [c_poke_times.mean()]
 
     print(c_summary)
@@ -323,3 +332,5 @@ if __name__ == '__main__':
 
 def start_gui():
     app.run_server(debug=True)
+
+# %%
