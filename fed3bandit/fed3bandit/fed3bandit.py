@@ -353,10 +353,10 @@ def iti_after_loss(data_choices):
     """
     f_data_choices = filter_data(data_choices, skip=["LeftinTimeOut", "RightinTimeout", "Pellet"])
     
-    side_idx = np.where(np.logical_or(f_data_choices["Event"] == "Left", 
-                                      f_data_choices["Event"] == "Right"))[0]
-    to_poke_idx = np.where(np.logical_or(f_data_choices["Event"] == "LeftinTimeOut", 
-                                         f_data_choices["Event"] == "RightinTimeout"))[0]
+    side_idx = np.where(np.logical_or(f_data_choices["Event"].iloc[:-1] == "Left", 
+                                      f_data_choices["Event"].iloc[:-1] == "Right"))[0]
+    to_poke_idx = np.where(np.logical_or(f_data_choices["Event"].iloc[:-1] == "LeftinTimeOut", 
+                                         f_data_choices["Event"].iloc[:-1] == "RightinTimeout"))[0]
     
     loss_idx = []
     for idx in side_idx[:-1]:
