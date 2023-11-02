@@ -1,5 +1,6 @@
-from dash import Dash, dcc, html, Input, Output, State, ctx, dash_table
+from dash import Dash, dcc, html, Input, Output, State, ctx, dash_table, callback
 from plotly.subplots import make_subplots
+import dash
 import dash_bootstrap_components as dbc
 import datetime
 import pandas as pd
@@ -17,27 +18,23 @@ file_data = {}
 
 #%%
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], pages_folder="")
+dash.register_page(__name__)
 
-app.layout = dbc.Container([
-    dbc.Row(dbc.Navbar(children=[
-        dbc.Col(html.H4("Home",  style = {"textAlign": 'center'})),
-        dbc.Col(dbc.NavItem(dbc.NavLink("Group Analysis", href="/group_analysis", id="group_link"))),
-        dbc.Col(html.H4("Circadian Analysis",  style = {"textAlign": 'center'}))
-    ], color="light")),
+layout = dbc.Container([
     dbc.Row(html.H1("FED3Bandit Analyis", style = {"textAlign": 'center'})),
     dbc.Row([
         dbc.Col([
             dbc.Row(dcc.Upload(children=dbc.Button('Upload File', outline=True, color="primary", size="lg", className="me-1"), multiple=False, id="upload_csv")),
+            html.Br(),
             dbc.Row([
                 dbc.Col(html.H4("Files", style = {"textAlign": 'left','padding': 5})),
                 dbc.Col(dbc.Button('Clear', id="clear_button", outline=True, color="link", size="sm", className="me-1", style ={'padding': 10}))
             ]),
             dcc.Dropdown(id="my_files", options = file_names),
             html.Br(),
-            dbc.Row(dbc.Button('Run', outline=False, color="primary", className="me-1", id="individual_run")),
+            dbc.Row(dbc.Button('Run', outline=False, color="primary", className="me-1", id="individual_run", disabled=True)),
             html.Br(),
-            dbc.Row(dbc.Button("Download File Summary", id="summary_button", outline=True, color="primary", size="lg", className="me-1")),
+            dbc.Row(dbc.Button("Download File Summary", id="summary_button", outline=True, color="primary", size="lg", className="me-1", disabled=True)),
             dcc.Download(id="download_summary")
         ],width=2),
         dbc.Col([
@@ -45,7 +42,7 @@ app.layout = dbc.Container([
             dbc.Row([dcc.Graph(id="s_actions", figure={"layout": go.Layout(margin={"t": 0})})])
         ], width=6),
         dbc.Col([
-            html.H4("Summary", style = {"textAlign": 'center'}),
+            html.H4("Summary (Average)", style = {"textAlign": 'center'}),
             dbc.Row([dash_table.DataTable([{"BLANK": "TABLE"}], id="summary_table")])
         ], width=2),
         dbc.Col([
@@ -59,8 +56,10 @@ app.layout = dbc.Container([
     ])
 ])
 
-@app.callback(
+
+@callback(
         Output("my_files", "options"),
+        Output("my_files", "value"),
         Input("upload_csv", "contents"),
         Input("clear_button", "n_clicks"),
         State("upload_csv", "filename"),
@@ -82,9 +81,9 @@ def update_output(list_of_contents, clear_press, filenames):
         file_data = {}
         file_names = []
         
-    return file_names
+    return file_names, None
 
-@app.callback(
+@callback(
         Output("start_date", "date"),
         Output("start_date", "min_date_allowed"),
         Output("start_date", "max_date_allowed"),
@@ -106,7 +105,7 @@ def update_dates(file):
 
         return start_date, start_date, end_date, True
     
-@app.callback(
+@callback(
         Output("start_time", "disabled"),
         Output("start_time", "options"),
         Output("start_time", "value"),
@@ -115,9 +114,10 @@ def update_dates(file):
         Output("analysis_hours", "value"),
         Input("my_files", "value"),
         Input("start_date", "date"),
+        Input("clear_button", "n_clicks"),
         prevent_initial_call=True
 )
-def update_time(file, start_date):
+def update_time(file, start_date, clear_click):
     if file != None:
         c_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
         
@@ -130,13 +130,16 @@ def update_time(file, start_date):
 
         times = [str(i) for i in range(int(first_event_str), 24)]
         hours = [str(i+1) for i in range(100)]
-        return False, times, first_event_str, False, hours, "6"
+        
+        first_hour = hours[0]
+
+        return False, times, first_event_str, False, hours, first_hour
 
     else:
         return True, [0], 0, True, [0], 0
 
 
-@app.callback(
+@callback(
         Output("s_actions", "figure"),
         Input("individual_run", "n_clicks"),
         State("start_date", "date"),
@@ -220,7 +223,7 @@ def update_graph(i_clicks, start_date, start_time, hours, file):
             
     return figure_i
 
-@app.callback(
+@callback(
     Output("summary_table", "data"),
     Input("individual_run", "n_clicks"),
     State("start_date", "date"),
@@ -263,7 +266,7 @@ def update_table(i_clicks, start_date, start_time, hours, file):
     return c_table
 
 
-@app.callback(
+@callback(
     Output("download_summary", "data"),
     Input("summary_button", "n_clicks"),
     State("my_files", "value"),
@@ -282,6 +285,9 @@ def summary(n_clicks, file, start_date, start_time, hours):
     c_slice = c_df[np.logical_and(c_df.iloc[:,0] >= start_datetime, c_df.iloc[:,0] <= end_datetime)]
 
     c_summary = {
+        "Start date": [start_datetime.date()],
+        "Start time": [start_datetime.time()],
+        "Analysis duration": [f"{hours} hours"],
         "Accuracy": [f3b.accuracy(c_slice)],
         "Win-Stay": [f3b.win_stay(c_slice)],
         "Lose-Shift": [f3b.lose_shift(c_slice)],
@@ -315,8 +321,6 @@ def summary(n_clicks, file, start_date, start_time, hours):
     except:
         c_summary["Reg Losses AUC"] = ["Not enough data"]
 
-    c_poke_times = f3b.filter_data(c_slice)["Poke_Time"].mean()
-    c_summary["Vigor"] = [c_poke_times.mean()]
 
     print(c_summary)
     c_summary_df = pd.DataFrame(c_summary)
@@ -326,10 +330,18 @@ def summary(n_clicks, file, start_date, start_time, hours):
 
     return dcc.send_data_frame(c_summary_df.to_csv, outname)
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+@callback(
+    Output('individual_run', 'disabled'),
+    Output('summary_button', 'disabled'),
+    Input('my_files', 'value'),
+    Input("clear_button", "n_clicks"),
+)
 
-def start_gui():
-    app.run_server(debug=True)
+def enable_analysis(c_file, clear_click):
+    if c_file == None:
+        return True, True
+    else:
+        return False, False
+
 
 # %%

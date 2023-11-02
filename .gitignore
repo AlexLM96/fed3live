@@ -8,4 +8,6 @@ docs/build/
 
 #Cache
 fed3bandit/fed3bandit/__pycache__/
+fed3bandit/fed3bandit/pages/__pycache__/
+
 fed3bandit/__pycache__/
