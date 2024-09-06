@@ -9,7 +9,6 @@ import statsmodels.api as sm
 import pkg_resources
 
 #%%
-
 def load_sampledata():
     """Loads sample data from a bandit task that has the specification
     shared in Arduino example
@@ -47,13 +46,35 @@ def filter_data(data_choices, skip=[]):
         for event_type in skip:
             event_types.remove(event_type)
 
-    filtered_data = copy.deepcopy(data_choices)
+    filtered_data = data_choices.copy()
     for event_type in event_types:
         filtered_data = filtered_data[filtered_data["Event"] != event_type]
     
-    filtered_data.iloc[:,0] = pd.to_datetime(filtered_data.iloc[:,0])
-    
     return filtered_data.reset_index(drop=True)
+
+def load_data(path, filter=False):
+    """Loads data and changes first column to timestamp dtype
+
+    Parameters
+    ----------
+    path : str
+        File path
+    filter : bool
+        
+    Returns
+    --------
+    data_choices : pandas.DataFrame
+        DataFrame with first column (timestamps) as datetime dtype
+    """
+
+    data_choices = pd.read_csv(path)
+    data_choices.loc[data_choices.columns[0]] = pd.to_datetime(data_choices.iloc[:,0])
+
+    if filter == True:
+        data_choices = filter_data(data_choices)
+
+    return data_choices
+
 
 def binned_paction(data_choices, window=5):
     """Bins actions from fed3 bandit file
@@ -328,7 +349,6 @@ def iti_after_win(data_choices):
     pellet_ts = f_data_choices.iloc[pellet_idx, 0].reset_index(drop=True)
     n_pellet_ts = f_data_choices.iloc[n_pellet_idx, 0].reset_index(drop=True)
     
-
     min_rows = np.min([pellet_ts.shape[0], n_pellet_ts.shape[0]])
 
     pellet_ts = pellet_ts.iloc[:min_rows]
@@ -682,6 +702,43 @@ def logit_regr(X_df):
     c_regr =sm.Logit(c_y, c_X, missing="drop").fit()
     
     return c_regr
+
+def timecourse(data_choices, metric, start_datetime, end_datetime, time_interval):
+    """Calculates timecourse of any fed3bandit metric in a specific time range.
+    
+    Parameters
+    ----------
+    data_choices : pandas.DataFrame
+        The fed3 data file
+    metric : f3b.func, callable
+        Metric to calculate ()
+    start_datetime : datetime
+        Start of the time course analysis
+    end_datetime : datetime
+        End of the time course analysis
+    time interval : datetime.timedelta
+        
+    
+
+    Returns
+    --------
+    metric_tc : pd.DataFrame
+        Value of metric for every time interval
+
+    """
+    
+    metric_tc = {}   
+    c_datetime = start_datetime
+    while c_datetime <= end_datetime:
+        c_sl_end_datetime = c_datetime + time_interval
+        
+        c_sl_data = data_choices[np.logical_and(data_choices.iloc[:,0]>=c_datetime, data_choices.iloc[:,0]<=c_sl_end_datetime)]
+        c_sl_metric = metric(c_sl_data)
+        metric_tc[c_datetime] = c_sl_metric
+        
+        c_datetime = c_sl_end_datetime
+        
+    return pd.DataFrame(metric_tc)
 
 
 # %%

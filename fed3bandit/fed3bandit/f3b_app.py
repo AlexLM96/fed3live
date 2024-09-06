@@ -22,12 +22,12 @@ app.config.suppress_callback_exceptions = True
 #%%
 
 navbar = dbc.Navbar(children=[
-        dbc.Col(dcc.Link("Home", href="/home-page", id="home_link", style = {"margin-left": 100, "fontSize": 24, "font-weight": "bold", "font": "Helvetica",
+        dbc.Col(dcc.Link("Home", href="/home-page", id="home_link", style = {"fontSize": 24, "font-weight": "bold", "font": "Helvetica",
          "color": "black", "textDecoration": "None"})),
-        dbc.Col(dcc.Link("Group Analysis", href="/group-analysis", id="group_link", style = {"margin-left": 100, "fontSize": 24, "font-weight": "bold", "font": "Helvetica",
+        dbc.Col(dcc.Link("Group Analysis", href="/group-analysis", id="group_link", style = {"fontSize": 24, "font-weight": "bold", "font": "Helvetica",
         "color": "black", "textDecoration": "None"})),
-        dbc.Col(html.H4("Circadian Analysis",  style = {"textAlign": 'center'}))
-    ], color="light", style={"width": 1320, "margin-left": 300})
+        dbc.Col(html.H4("Circadian Analysis"))
+    ], color="light", style={"textAlign": 'center'})
 
 
 

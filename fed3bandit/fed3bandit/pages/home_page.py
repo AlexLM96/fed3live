@@ -21,7 +21,6 @@ file_data = {}
 dash.register_page(__name__)
 
 layout = dbc.Container([
-    dbc.Row(html.H1("FED3Bandit Analyis", style = {"textAlign": 'center'})),
     dbc.Row([
         dbc.Col([
             dbc.Row(dcc.Upload(children=dbc.Button('Upload File', outline=True, color="primary", size="lg", className="me-1"), multiple=False, id="upload_csv")),
@@ -46,12 +45,16 @@ layout = dbc.Container([
             dbc.Row([dash_table.DataTable([{"BLANK": "TABLE"}], id="summary_table")])
         ], width=2),
         dbc.Col([
-            dbc.Row(html.H4("Start date: ", style = {"textAlign": 'left','padding': 10})),
+            dbc.Row(html.H4("Start", style = {"textAlign": 'left','padding': 10})),
+            dcc.Checklist(options=["Beginning of file"], value=["Beginning of file"], id="beg_check"),
             dcc.DatePickerSingle(id="start_date", date=datetime.datetime.today(), disabled=True),
-            dbc.Row(html.H4("Start time: ", style = {"textAlign": 'left','padding': 10})),
+            html.Br(),
             dcc.Dropdown(id="start_time", disabled=True),
-            dbc.Row(html.H4("Hours: ",style = {"textAlign": 'left','padding': 10})),
-            dcc.Dropdown(id="analysis_hours", disabled=True),
+            dbc.Row(html.H4("End", style = {"textAlign": 'left','padding': 10})),
+            dcc.Checklist(options=["End of file"], value=["End of file"], id="end_check"),
+            dcc.DatePickerSingle(id="end_date", date=datetime.datetime.today(), disabled=True),
+            dcc.Dropdown(id="end_time", disabled=True),
+
         ],width=2)
     ])
 ])
@@ -89,16 +92,24 @@ def update_output(list_of_contents, clear_press, filenames):
         Output("start_date", "max_date_allowed"),
         Output("start_date", "disabled"),
         Input("my_files", "value"),
+        Input("beg_check", "value"),
         prevent_initial_call=True
 )
-def update_dates(file):
+def update_dates(file, beg_check):
     if file != None:
-        c_df = file_data[file]
-        c_dates = pd.to_datetime(c_df.iloc[:,0]).dt.date
-        start_date = c_dates.iloc[0]
-        end_date = c_dates.iloc[-1]
+        if beg_check != ["Beginning of file"]:
+            print(file_data)
+            c_df = file_data[file]
+            c_dates = pd.to_datetime(c_df.iloc[:,0]).dt.date
+            start_date = c_dates.iloc[0]
+            end_date = c_dates.iloc[-1]
 
-        return start_date, start_date, end_date, False
+            return start_date, start_date, end_date, False
+        else:
+            start_date = datetime.datetime.today()
+            end_date = datetime.datetime.today()
+
+            return start_date, start_date, end_date, True     
     else:
         start_date = datetime.datetime.today()
         end_date = datetime.datetime.today()
@@ -109,34 +120,36 @@ def update_dates(file):
         Output("start_time", "disabled"),
         Output("start_time", "options"),
         Output("start_time", "value"),
-        Output("analysis_hours", "disabled"),
+        Output("end_time", "disabled"),
         Output("analysis_hours", "options"),
         Output("analysis_hours", "value"),
+        Input("beg_check", "value"),
         Input("my_files", "value"),
         Input("start_date", "date"),
         Input("clear_button", "n_clicks"),
         prevent_initial_call=True
 )
-def update_time(file, start_date, clear_click):
+def update_time(beg_check, file, start_date, clear_click):
     if file != None:
-        c_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+        if beg_check != ["Beginning of file"]:
+            c_start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+            
+            c_df = file_data[file]
+            c_datetimes = pd.to_datetime(c_df.iloc[:,0])
+            c_start_datetimes = c_datetimes[c_datetimes.dt.date == c_start_date]
+
+            first_event_time = c_start_datetimes.dt.time.iloc[0]
+            first_event_str = str(first_event_time)[:2]
+
+            times = [str(i) for i in range(int(first_event_str), 24)]
+            hours = [str(i+1) for i in range(100)]
+
+            return False, times, str(times[0]), False
         
-        c_df = file_data[file]
-        c_datetimes = pd.to_datetime(c_df.iloc[:,0])
-        c_start_datetimes = c_datetimes[c_datetimes.dt.date == c_start_date]
-
-        first_event_time = c_start_datetimes.dt.time.iloc[0]
-        first_event_str = str(first_event_time)[:2]
-
-        times = [str(i) for i in range(int(first_event_str), 24)]
-        hours = [str(i+1) for i in range(100)]
-        
-        first_hour = hours[0]
-
-        return False, times, first_event_str, False, hours, first_hour
-
+        else:
+            return True, [0], 0, True
     else:
-        return True, [0], 0, True, [0], 0
+        return True, [0], 0, True
 
 
 @callback(
