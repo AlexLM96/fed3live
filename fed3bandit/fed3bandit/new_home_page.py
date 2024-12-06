@@ -11,6 +11,8 @@ import fed3bandit as f3b
 import base64
 import io
 import fed3
+import fed3.plot as fplot
+import matplotlib.pyplot as plt
 
 #%%
 
@@ -80,8 +82,6 @@ analyses_dict = {
 
 files = {}
 
-group = 0
-
 #%%
 
 app.layout = dbc.Container([
@@ -94,12 +94,12 @@ app.layout = dbc.Container([
         dbc.Col([
             html.Br(),
             dbc.Row(dcc.Upload(id="load_file", multiple=True, children=dbc.Button('Load files', outline=True, color="primary", size="lg", className="me-2"))),
-            dbc.Row(dbc.Button('Load folder', id="load_folder", outline=True, color="primary", size="lg", className="me-2")),
+            #dbc.Row(dbc.Button('Load folder', id="load_folder", outline=True, color="primary", size="lg", className="me-2")),
             dbc.Row(dbc.Button('Delete files', id="delete_file", outline=True, color="primary", size="lg", className="me-2")),
             html.Br(),
             dbc.Row(dbc.Button('Add group', id="add_group", outline=True, color="primary", size="lg", className="me-2")),
             dbc.Row(dbc.Button('Remove group', id="remove_group", outline=True, color="primary", size="lg", className="me-2")),
-            dbc.Row(dbc.Button('Edit group', id="edit_group", outline=True, color="primary", size="lg", className="me-2")),
+            #dbc.Row(dbc.Button('Edit group', id="edit_group", outline=True, color="primary", size="lg", className="me-2")),
         ], width=2),
         dbc.Col([
             html.Br(),
@@ -125,6 +125,19 @@ app.layout = dbc.Container([
                 ],
                 row_selectable = "multi",
                 style_cell = {"fontSize": 12}
+            ),
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Add Group")),
+                    dbc.ModalBody([
+                        "Group Name",
+                        html.Br(),
+                        dcc.Input(id="add_group_input", type="text", placeholder="")
+                    ]),
+                    dbc.ModalFooter(dbc.Button("Add", id="add_group_button"))
+                ],
+                id="add_group_modal",
+                is_open=False
             )
         ],width=8),
         dbc.Col([
@@ -134,7 +147,8 @@ app.layout = dbc.Container([
             dbc.Row(html.H4("Analysis")),
             dbc.Row(dcc.RadioItems(id="analysis_type", options=[])),
             html.Br(),
-            dbc.Row(dbc.Button('Plot', outline=True, color="primary", size="lg", className="me-2", disabled=True))
+            html.P(id="placeholder"),
+            dbc.Row(dbc.Button('Plot', id="plot_button", outline=True, color="primary", size="lg", className="me-2", disabled=True))
         ], width=2),
     ])
 ])
@@ -146,16 +160,16 @@ app.layout = dbc.Container([
         Input("load_file", "contents"),
         #Input("load_folder", "n_clicks"),
         Input("delete_file", "n_clicks"),
-        Input("add_group", "n_clicks"),
+        Input("add_group_button", "n_clicks"),
         #Input("edit_group", "n_clicks"),
-        #Input("remove_group", "n_clicks"),
+        Input("remove_group", "n_clicks"),
         State("files_table", "selected_rows"),
         State("load_file", "filename"),
-
+        State("add_group_input", "value"),
         prevent_initial_call=True
 )
 
-def update_files(list_of_contents, delete_click, group_click, s_rows, filename):
+def update_files(list_of_contents, delete_click, group_button_click, remove_click, s_rows, filename, new_group_name):
 
     global files
     global df
@@ -174,7 +188,7 @@ def update_files(list_of_contents, delete_click, group_click, s_rows, filename):
                 c_file2._load_init()
                 c_file2 = c_file2.set_index(c_file2.columns[0])
                 #c_file2 = fed3.load(io.StringIO(decoded.decode('utf-8')))
-                files[c_filename] = c_file
+                files[c_filename] = c_file2
 
         for file in files:
             c_file = files[file]
@@ -213,11 +227,21 @@ def update_files(list_of_contents, delete_click, group_click, s_rows, filename):
 
         new_data = df.to_dict('records')
 
-    elif button_clicked == "add_group":
+    elif button_clicked == "add_group_button":
 
         if s_rows != None:
-            df.loc[s_rows, "Group"] = str(int(group))
-            group += 1
+            df.loc[s_rows, "Group"] = new_group_name
+        else:
+            print("Must select a row first")
+            pass
+
+        new_data = df.to_dict('records')
+
+    elif button_clicked == "remove_group":
+
+        if s_rows != None:
+            df.loc[s_rows, "Group"] = ""
+
         else:
             print("Must select a row first")
             pass
@@ -236,6 +260,51 @@ def update_output(mode):
     c_options = analyses_dict[mode]
         
     return c_options
+
+@app.callback(
+    Output("add_group_modal", "is_open"),
+    Input("add_group_button", "n_clicks"),
+    Input("add_group", "n_clicks"),
+)
+
+def open_modal(ag_clicks, r_clicks):
+    print("Here")
+    button_clicked = ctx.triggered_id
+    print(button_clicked)
+
+    if button_clicked == "add_group":
+        return True
+    
+    elif button_clicked == "add_group_button":
+        return False
+    
+@app.callback(
+    Output("plot_button", "disabled"),
+    Input("analysis_type", "value"),
+    prevent_initial_call=True
+)
+
+def enable_plot(select_analysis):
+    print(select_analysis)
+    if select_analysis != None:
+        return False
+
+#Start testing plotting
+@app.callback(
+    Output("placeholder", "hidden"),
+    Input("plot_button", "n_clicks"),
+    State("files_table", "selected_rows"),
+    prevent_initial_call = True
+)
+
+def test_plot(plot_click, s_rows):
+    c_selected_name = list(df["Name"].iloc[s_rows])
+    c_selected_files = [files[name] for name in c_selected_name]
+    print(type(c_selected_files[0]))
+    fplot.line(c_selected_files[0], y="pellets")
+
+
+    return True
 
 #%%
 
